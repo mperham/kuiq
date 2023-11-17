@@ -10,19 +10,55 @@ module Quick
   class UI
     include Glimmer
 
+    def initialize
+      @info = Sidekiq.default_configuration.redis_info
+    end
+
     def run
-      info = Sidekiq.default_configuration.redis_info
       window {
         margined true
         title "Sidekiq"
-        horizontal_box {
-          vertical_box {
-            label "Redis Version"
-            label info["redis_version"]
+
+        vertical_box {
+          @navbar = horizontal_box {
+            label "Sidekiq"
+            label "Dashboard"
+            label "Busy"
+            label "Queues"
+            label "Retries"
+            label "Scheduled"
+            label "Dead"
           }
-          vertical_box {
-            label "Used Memory"
-            label info["used_memory_human"]
+
+          @dashboard = horizontal_box {
+            vertical_box {
+              label "Redis Version"
+              label @info["redis_version"]
+            }
+            vertical_box {
+              label "Uptime"
+              label @info["uptime_in_days"]
+            }
+            vertical_box {
+              label "Connections"
+              label @info["connected_clients"]
+            }
+            vertical_box {
+              label "Used Memory"
+              label @info["used_memory_human"]
+            }
+            vertical_box {
+              label "Peak Used Memory"
+              label @info["used_memory_peak_human"]
+            }
+          }
+
+          @footer = horizontal_box {
+            label("#{Sidekiq::NAME} v#{Sidekiq::VERSION}")
+            label(Sidekiq.redis { |c| c.config.server_url })
+            label(Time.now.utc.strftime("%H:%M:%S UTC"))
+            label "docs"
+            label "en"
           }
         }
       }.show
