@@ -1,3 +1,5 @@
 #!/usr/bin/env ruby
 
-require "app"
+require "quick"
+
+Quick::UI.new.run

@@ -1,5 +1,20 @@
-task :run do
-  require_relative "./app"
+# frozen_string_literal: true
+
+require "bundler/gem_tasks"
+require "rake/testtask"
+
+Rake::TestTask.new(:test) do |t|
+  t.libs << "test"
+  t.libs << "lib"
+  t.test_files = FileList["test/**/test_*.rb"]
 end
 
-task :default => :run
+require "standard/rake"
+
+task default: %i[test standard]
+
+task :run do
+  $LOAD_PATH << "lib"
+  require "quick"
+  Quick::UI.new.run
+end
