@@ -31,6 +31,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   # Uncomment to register a new dependency of your gem
-  spec.add_dependency "glimmer-dsl-libui"
-  spec.add_dependency "sidekiq"
+  spec.add_dependency "glimmer-dsl-libui", "~> 0.5"
+  spec.add_dependency "sidekiq", "~> 7.2"
 end
