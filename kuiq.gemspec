@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.authors = ["Mike Perham"]
   spec.email = ["mperham@gmail.com"]
 
-  spec.summary = "TODO: Write a short summary, because RubyGems requires one."
-  spec.description = "TODO: Write a longer description or delete this line."
+  spec.summary = "Sidekiq desktop application"
+  spec.description = "A native desktop application for Sidekiq operators, using the Glimmer toolkit"
   spec.homepage = "https://github.com/mperham/quick"
   spec.license = "LGPL"
   spec.required_ruby_version = ">= 3.2.0"
