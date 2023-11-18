@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary = "Sidekiq desktop application"
   spec.description = "A native desktop application for Sidekiq operators, using the Glimmer toolkit"
   spec.homepage = "https://github.com/mperham/quick"
-  spec.license = "LGPL"
+  spec.license = "LGPL-3.0"
   spec.required_ruby_version = ">= 3.2.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
