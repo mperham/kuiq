@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+require "kuiq"
+
+Kuiq::UI.new.run

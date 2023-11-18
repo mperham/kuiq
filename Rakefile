@@ -15,6 +15,6 @@ task default: %i[test standard]
 
 task :run do
   $LOAD_PATH << "lib"
-  require "quick"
-  Quick::UI.new.run
+  require "kuiq"
+  Kuiq::UI.new.run
 end

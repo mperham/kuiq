@@ -1,6 +1,6 @@
-# Quick - Sidekiq UI
+# Kuiq - Sidekiq UI
 
-Quick is a native desktop application for Sidekiq admin UI. It uses the Glimmer toolkit for building native GUIs in Ruby.
+Kuiq (**UI** for Side**kiq**, pronounced "quick") is a native desktop application for Sidekiq administration. It uses the Glimmer toolkit for building native GUIs in Ruby.
 
 Please note this is a prototype and nothing official or usable at the moment.
 

@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require "quick/version"
+require "kuiq/version"
 require "sidekiq"
 require "glimmer-dsl-libui"
 
 # Redis is located at REDIS_URL || localhost:6379
 
-module Quick
+module Kuiq
   class UI
     include Glimmer
 

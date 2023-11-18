@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require_relative "lib/quick/version"
+require_relative "lib/kuiq/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "quick"
-  spec.version = Quick::VERSION
+  spec.name = "kuiq"
+  spec.version = Kuiq::VERSION
   spec.authors = ["Mike Perham"]
   spec.email = ["mperham@gmail.com"]
 
