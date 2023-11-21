@@ -1,67 +1,6 @@
 # frozen_string_literal: true
 
 require "kuiq/version"
-require "sidekiq"
-require "glimmer-dsl-libui"
-
-# Redis is located at REDIS_URL || localhost:6379
 
 module Kuiq
-  class UI
-    include Glimmer
-
-    def initialize
-      @info = Sidekiq.default_configuration.redis_info
-    end
-
-    def run
-      window {
-        margined true
-        title "Sidekiq"
-
-        vertical_box {
-          @navbar = horizontal_box {
-            label "Sidekiq"
-            label "Dashboard"
-            label "Busy"
-            label "Queues"
-            label "Retries"
-            label "Scheduled"
-            label "Dead"
-          }
-
-          @dashboard = horizontal_box {
-            vertical_box {
-              label "Redis Version"
-              label @info["redis_version"]
-            }
-            vertical_box {
-              label "Uptime"
-              label @info["uptime_in_days"]
-            }
-            vertical_box {
-              label "Connections"
-              label @info["connected_clients"]
-            }
-            vertical_box {
-              label "Used Memory"
-              label @info["used_memory_human"]
-            }
-            vertical_box {
-              label "Peak Used Memory"
-              label @info["used_memory_peak_human"]
-            }
-          }
-
-          @footer = horizontal_box {
-            label("#{Sidekiq::NAME} v#{Sidekiq::VERSION}")
-            label(Sidekiq.redis { |c| c.config.server_url })
-            label(Time.now.utc.strftime("%H:%M:%S UTC"))
-            label "docs"
-            label "en"
-          }
-        }
-      }.show
-    end
-  end
 end

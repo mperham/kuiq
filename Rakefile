@@ -15,6 +15,7 @@ task default: %i[test standard]
 
 task :run do
   $LOAD_PATH << "lib"
-  require "kuiq"
-  Kuiq::UI.new.run
+  require "concurrent"
+  require "kuiq/admin_ui"
+  AdminUI.launch
 end

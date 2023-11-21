@@ -1,5 +1,4 @@
 #!/usr/bin/env ruby
 
-require "kuiq"
-
-Kuiq::UI.new.run
+require "kuiq/admin_ui"
+AdminUI.launch
