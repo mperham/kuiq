@@ -15,8 +15,13 @@ module View
         }
   
         horizontal_box {
-          label("Dashboard") {
+          area {
             stretchy false
+            
+            text(0, 0, 200) {
+              default_font size: 30
+              string("Dashboard")
+            }
           }
   
           # filler
