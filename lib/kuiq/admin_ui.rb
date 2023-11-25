@@ -1,6 +1,6 @@
-require "glimmer-dsl-libui"
 require "sidekiq"
 require "sidekiq/api"
+require "glimmer-dsl-libui"
 
 require "kuiq/models"
 require "kuiq/components"
