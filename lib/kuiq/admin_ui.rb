@@ -1,15 +1,15 @@
-require "glimmer-dsl-libui"
 require "sidekiq"
 require "sidekiq/api"
+require "glimmer-dsl-libui"
 
-require "kuiq/models"
-require "kuiq/components"
+require "kuiq/model/job_manager"
+require "kuiq/view/dashboard"
 
 class AdminUI
   include Glimmer::LibUI::Application
 
   before_body do
-    @job_manager = JobManager.new
+    @job_manager = Model::JobManager.new
   end
 
   after_body do
