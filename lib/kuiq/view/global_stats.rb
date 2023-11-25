@@ -5,14 +5,13 @@ module View
   class GlobalStats
     include Glimmer::LibUI::CustomControl
   
-    option :job_manager
+    option :model
+    option :attributes
   
     body {
       horizontal_box {
-        stretchy false
-  
-        Model::Job::STATUSES.each_pair do |k, v|
-          global_stat(job_manager: job_manager, k:, v:)
+        attributes.each do |attribute|
+          global_stat(model: model, attribute: attribute)
         end
       }
     }

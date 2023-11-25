@@ -10,7 +10,9 @@ module View
   
     body {
       vertical_box {
-        global_stats(job_manager: job_manager)
+        global_stats(model: job_manager, attributes: Model::Job::STATUSES) {
+          stretchy false
+        }
   
         horizontal_box {
           label("Dashboard") {
@@ -40,27 +42,8 @@ module View
   
         dashboard_graph(job_manager: job_manager)
   
-        horizontal_box {
-          vertical_box {
-            label "Redis Version"
-            label job_manager.redis_info["redis_version"]
-          }
-          vertical_box {
-            label "Uptime"
-            label job_manager.redis_info["uptime_in_days"]
-          }
-          vertical_box {
-            label "Connections"
-            label job_manager.redis_info["connected_clients"]
-          }
-          vertical_box {
-            label "Used Memory"
-            label job_manager.redis_info["used_memory_human"]
-          }
-          vertical_box {
-            label "Peak Used Memory"
-            label job_manager.redis_info["used_memory_peak_human"]
-          }
+        global_stats(model: job_manager.redis_info, attributes: Model::JobManager::REDIS_PROPERTIES) {
+          stretchy false
         }
   
         status_bar(job_manager: job_manager)

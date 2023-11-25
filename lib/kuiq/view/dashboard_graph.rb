@@ -19,6 +19,7 @@ module View
         end
         time_remaining -= timer_interval
         if time_remaining == 0
+          job_manager.refresh
           body_root.queue_redraw_all
           time_remaining = job_manager.polling_interval
         end

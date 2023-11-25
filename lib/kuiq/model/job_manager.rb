@@ -2,6 +2,8 @@ require "kuiq/model/job"
 
 module Model
   class JobManager
+    REDIS_PROPERTIES = %w[redis_version uptime_in_days connected_clients used_memory_human used_memory_peak_human]
+    
     attr_accessor :jobs, :polling_interval
     attr_reader :redis_url, :current_time, :docs_url, :locale, :locale_url, :redis_info
   
@@ -18,7 +20,9 @@ module Model
     end
   
     def stats
-      @stats ||= Sidekiq::Stats.new
+      # do not cache in a variable to ensure getting the latest values when calling methods
+      # off of the Status object (e.g. when calling stats.processed)
+      Sidekiq::Stats.new
     end
   
     def processed = stats.processed
@@ -34,7 +38,28 @@ module Model
     def scheduled = stats.scheduled_size
   
     def dead = stats.dead_size
-  
+      
+    def refresh
+      refresh_stats
+      refresh_redis_properties
+    end
+    
+    def refresh_stats
+      Job::STATUSES.each do |status|
+        # notify_observers is added automatically by Glimmer when data-binding
+        # it enables manually triggering data-binding changes when needed
+        notify_observers(status)
+      end
+    end
+    
+    def refresh_redis_properties
+      REDIS_PROPERTIES.each do |property|
+        # notify_observers is added automatically by Glimmer when data-binding
+        # it enables manually triggering data-binding changes when needed
+        redis_info.notify_observers(property)
+      end
+    end
+    
     def report_points
       points = []
       current_jobs = jobs.dup
