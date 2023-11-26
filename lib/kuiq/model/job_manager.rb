@@ -40,6 +40,10 @@ module Kuiq
     
       def dead = stats.dead_size
         
+      def retried_jobs
+        []
+      end
+        
       def refresh
         refresh_stats
         refresh_redis_properties

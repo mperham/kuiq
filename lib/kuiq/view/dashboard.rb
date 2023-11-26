@@ -1,6 +1,6 @@
 require "kuiq/view/global_stats"
 require "kuiq/view/dashboard_graph"
-require "kuiq/view/status_bar"
+require "kuiq/view/footer"
 require "kuiq/view/graphical_label"
 
 module Kuiq
@@ -48,7 +48,9 @@ module Kuiq
             stretchy false
           }
     
-          status_bar(job_manager: job_manager)
+          footer(job_manager: job_manager) {
+            stretchy false
+          }
         }
       }
     end

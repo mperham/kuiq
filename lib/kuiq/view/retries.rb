@@ -1,5 +1,6 @@
 require "kuiq/view/global_stats"
-require "kuiq/view/status_bar"
+require "kuiq/view/retries_table"
+require "kuiq/view/footer"
 
 module Kuiq
   module View
@@ -14,9 +15,11 @@ module Kuiq
             stretchy false
           }
           
-          graphical_label(label_text: 'Retries', width: 200, font_properties: {size: 30})
+          retries_table(job_manager: job_manager)
           
-          status_bar(job_manager: job_manager)
+          footer(job_manager: job_manager) {
+            stretchy false
+          }
         }
       }
     end
