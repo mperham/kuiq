@@ -1,8 +1,10 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+$LOAD_PATH.unshift File.expand_path(File.join(__dir__, '..', 'lib'))
+
 require "bundler/setup"
-require "quick"
+require "kuiq/sidekiq_ui"
 
 # You can add fixtures and/or initialization code here to make experimenting
 # with your gem easier. You can also use a different console, if you like.

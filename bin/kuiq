@@ -2,5 +2,5 @@
 
 $LOAD_PATH.unshift File.expand_path(File.join(__dir__, '..', 'lib'))
 
-require "kuiq/admin_ui"
-AdminUI.launch
+require "kuiq/sidekiq_ui"
+Kuiq::SidekiqUI.launch
