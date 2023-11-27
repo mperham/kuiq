@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "fileutils"
 require "bundler/gem_tasks"
 require "rake/testtask"
 
@@ -13,9 +14,6 @@ require "standard/rake"
 
 task default: %i[test standard]
 
-task :run do
-  $LOAD_PATH << "lib"
-  require "concurrent"
-  require "kuiq/admin_ui"
-  AdminUI.launch
+task :refresh_locales do
+  FileUtils.cp_r "../sidekiq/web/locales", "."
 end

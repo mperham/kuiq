@@ -10,13 +10,12 @@ module Kuiq
       attr_reader :redis_url, :current_time, :docs_url, :locale, :locale_url, :redis_info
 
       def initialize
-        @current_time = Time.now
         @jobs = []
         @polling_interval = 5
         @redis_url = Sidekiq.redis { |c| c.config.server_url }
         @current_time = Time.now.utc
         @docs_url = "https://github.com/sidekiq/sidekiq/wiki"
-        @locale_url = "https://github.com/sidekiq/sidekiq/"
+        @locale_url = "https://github.com/sidekiq/sidekiq/tree/main/web/locales"
         @locale = "en"
         @redis_info = Sidekiq.default_configuration.redis_info
       end
@@ -58,6 +57,7 @@ module Kuiq
       end
 
       def refresh
+        @current_time = Time.now.utc
         refresh_stats
         refresh_redis_properties
       end
