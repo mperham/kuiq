@@ -5,6 +5,8 @@ GEM
     ast (2.4.2)
     awesome_print (1.9.2)
     base64 (0.1.1)
+    chronic_duration (0.10.6)
+      numerizer (~> 0.1.1)
     chunky_png (1.4.0)
     color (1.8)
     concurrent-ruby (1.2.2)
@@ -30,11 +32,13 @@ GEM
       text-table (>= 1.2.4, < 2.0.0)
     json (2.6.3)
     language_server-protocol (3.17.0.3)
+    libui (0.1.2.pre)
     libui (0.1.2.pre-arm64-darwin)
     lint_roller (1.1.0)
     matrix (0.4.2)
     method_source (1.0.0)
     minitest (5.20.0)
+    numerizer (0.1.1)
     os (1.1.4)
     parallel (1.23.0)
     parser (3.2.2.4)
@@ -110,9 +114,12 @@ GEM
     wisper (2.0.1)
 
 PLATFORMS
+  arm64-darwin-21
   arm64-darwin-22
+  x86_64-linux
 
 DEPENDENCIES
+  chronic_duration (>= 0.10.6, < 2.0.0)
   glimmer-dsl-libui (= 0.11.4)
   minitest
   rake

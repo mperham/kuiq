@@ -8,3 +8,5 @@
 /tmp/
 .gladiator
 .gladiator-scratchpad
+.ruby-version
+.ruby-gemset
