@@ -52,7 +52,7 @@ module Kuiq
           job_redis_hash_json, score = Paginator.instance.page(key, page, 1).last.reject { |j| j.is_a?(Numeric) }.first
           if job_redis_hash_json
             job_redis_hash = JSON.parse(job_redis_hash_json)
-            yielder << Job.new(job_redis_hash, score, index) # if job_redis_hash['retry_count'] > 0
+            yielder << Job.new(job_redis_hash, score, index)
           end
         end
       end
