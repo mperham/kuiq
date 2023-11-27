@@ -4,7 +4,7 @@ module Kuiq
       include Glimmer::LibUI::CustomControl
     
       option :job_manager
-    
+      
       body {
         table {
           text_column('Next Retry')
@@ -14,7 +14,7 @@ module Kuiq
           text_column('Arguments')
           text_column('Error')
           
-          cell_rows <= [job_manager, :retried_jobs]
+          cell_rows job_manager.retried_jobs
         }
       }
     end

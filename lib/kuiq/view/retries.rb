@@ -17,6 +17,10 @@ module Kuiq
           
           retries_table(job_manager: job_manager)
           
+          horizontal_separator {
+            stretchy false
+          }
+          
           footer(job_manager: job_manager) {
             stretchy false
           }

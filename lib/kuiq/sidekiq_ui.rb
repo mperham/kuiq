@@ -2,6 +2,7 @@ require "sidekiq"
 require "sidekiq/api"
 require "glimmer-dsl-libui"
 
+require "kuiq"
 require "kuiq/model/job_manager"
 require "kuiq/view/dashboard"
 require "kuiq/view/retries"
@@ -19,7 +20,7 @@ module Kuiq
     end
   
     body {
-      window("Sidekiq UI", 800, 450) {
+      window("Sidekiq UI", WINDOW_WIDTH, WINDOW_HEIGHT) {
         vertical_box {
           tab {
             tab_item("Dashboard") {

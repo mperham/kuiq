@@ -33,4 +33,5 @@ Gem::Specification.new do |spec|
   # Uncomment to register a new dependency of your gem
   spec.add_dependency "glimmer-dsl-libui", "= 0.11.4"
   spec.add_dependency "sidekiq", "~> 7.2"
+  spec.add_dependency "chronic_duration", ">= 0.10.6", "< 2.0.0"
 end

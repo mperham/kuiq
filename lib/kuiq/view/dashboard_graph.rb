@@ -1,3 +1,5 @@
+require "kuiq"
+
 module Kuiq
   module View
     class DashboardGraph
@@ -31,7 +33,7 @@ module Kuiq
         area {
           stretchy false
     
-          rectangle(0, 0, 800, 200) {
+          rectangle(0, 0, WINDOW_WIDTH, 200) {
             fill 255, 255, 255
           }
     
