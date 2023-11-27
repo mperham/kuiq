@@ -1,5 +1,5 @@
-require 'sidekiq/paginator'
-require 'singleton'
+require "sidekiq/paginator"
+require "singleton"
 
 module Kuiq
   module Model

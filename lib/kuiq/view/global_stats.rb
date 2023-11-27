@@ -5,10 +5,10 @@ module Kuiq
   module View
     class GlobalStats
       include Glimmer::LibUI::CustomControl
-    
+
       option :model
       option :attributes
-    
+
       body {
         horizontal_box {
           attributes.each do |attribute|

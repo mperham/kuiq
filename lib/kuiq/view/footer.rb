@@ -2,9 +2,9 @@ module Kuiq
   module View
     class Footer
       include Glimmer::LibUI::CustomControl
-    
+
       option :job_manager
-    
+
       body {
         horizontal_box {
           label("Sidekiq v#{Sidekiq::VERSION}") {

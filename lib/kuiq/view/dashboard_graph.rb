@@ -4,9 +4,9 @@ module Kuiq
   module View
     class DashboardGraph
       include Glimmer::LibUI::CustomControl
-    
+
       option :job_manager
-    
+
       after_body do
         polling_interval = job_manager.polling_interval
         time_remaining = job_manager.polling_interval
@@ -28,15 +28,15 @@ module Kuiq
           end
         end
       end
-    
+
       body {
         area {
           stretchy false
-    
+
           rectangle(0, 0, WINDOW_WIDTH, 200) {
             fill 255, 255, 255
           }
-    
+
           on_draw do
             last_point = nil
             job_manager.report_points.each do |point|
