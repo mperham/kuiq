@@ -17,7 +17,7 @@ module Kuiq
           }
 
           horizontal_box {
-            graphical_label(label_text: t("Dashboard"), width: 200, font_properties: {size: 30})
+            graphical_label(label_text: t("Dashboard"), font_properties: {size: 30})
 
             # filler
             label
@@ -42,7 +42,7 @@ module Kuiq
 
           dashboard_graph(job_manager: job_manager)
 
-          graphical_label(label_text: "Redis", width: 200, font_properties: {size: 30})
+          graphical_label(label_text: "Redis", font_properties: {size: 30})
 
           global_stats(model: job_manager.redis_info, attributes: Model::JobManager::REDIS_PROPERTIES) {
             stretchy false
