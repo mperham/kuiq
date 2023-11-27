@@ -56,6 +56,22 @@ module Kuiq
         end
       end
 
+      def scheduled_jobs
+        # Data will get lazy loaded into the table as the user scrolls through.
+        # After data is built, it is cached long-term, till updating table `cell_rows`.
+        key = "schedule"
+        count = scheduled
+        Enumerator::Lazy.new(count.times, count) do |yielder, index|
+          page = index + 1
+          count = 1
+          job_redis_hash_json, score = Paginator.instance.page(key, page, 1).last.reject { |j| j.is_a?(Numeric) }.first
+          if job_redis_hash_json
+            job_redis_hash = JSON.parse(job_redis_hash_json)
+            yielder << Job.new(job_redis_hash, score, index)
+          end
+        end
+      end
+
       def refresh
         @current_time = Time.now.utc
         refresh_stats

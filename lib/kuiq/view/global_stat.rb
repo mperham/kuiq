@@ -1,7 +1,7 @@
 module Kuiq
   module View
     class GlobalStat
-      include Glimmer::LibUI::CustomControl
+      include Kuiq::Control
 
       ATTRIBUTE_CUSTOM_TEXT = {
         "uptime_in_days" => "Uptime",
@@ -19,7 +19,7 @@ module Kuiq
 
       body {
         vertical_box {
-          label(@attribute_text)
+          label(t(@attribute_text))
 
           label {
             text <= [model, attribute, on_read: :to_s]

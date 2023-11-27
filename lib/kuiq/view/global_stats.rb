@@ -4,7 +4,7 @@ require "kuiq/view/global_stat"
 module Kuiq
   module View
     class GlobalStats
-      include Glimmer::LibUI::CustomControl
+      include Kuiq::Control
 
       option :model
       option :attributes

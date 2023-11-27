@@ -1,7 +1,7 @@
 module Kuiq
   module View
     class GraphicalLabel
-      include Glimmer::LibUI::CustomControl
+      include Kuiq::Control
 
       option :label_text
       option :width

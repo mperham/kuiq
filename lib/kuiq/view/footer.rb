@@ -1,7 +1,7 @@
 module Kuiq
   module View
     class Footer
-      include Glimmer::LibUI::CustomControl
+      include Kuiq::Control
 
       option :job_manager
 

@@ -22,10 +22,11 @@ module Kuiq
         elsif time_duration_until_next_retry < 10
           "Right now"
         else
-          chronic_output = ChronicDuration.output(time_duration_until_next_retry, format: :long)
+          chronic_output = ChronicDuration.output(time_duration_until_next_retry, format: :short)
           "In #{chronic_output}"
         end
       end
+      alias_method :when, :next_retry
 
       def job
         redis_hash["class"]

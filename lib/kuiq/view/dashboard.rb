@@ -6,7 +6,7 @@ require "kuiq/view/graphical_label"
 module Kuiq
   module View
     class Dashboard
-      include Glimmer::LibUI::CustomControl
+      include Kuiq::Control
 
       option :job_manager
 
@@ -17,14 +17,14 @@ module Kuiq
           }
 
           horizontal_box {
-            graphical_label(label_text: "Dashboard", width: 200, font_properties: {size: 30})
+            graphical_label(label_text: t("Dashboard"), width: 200, font_properties: {size: 30})
 
             # filler
             label
 
             vertical_box {
               horizontal_box {
-                label("Polling interval:") {
+                label(t("PollingInterval")) {
                   stretchy false
                 }
 

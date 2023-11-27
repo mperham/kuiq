@@ -3,7 +3,7 @@ require "kuiq"
 module Kuiq
   module View
     class DashboardGraph
-      include Glimmer::LibUI::CustomControl
+      include Kuiq::Control
 
       option :job_manager
 
