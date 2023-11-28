@@ -17,33 +17,33 @@ module Kuiq
 
           group(t("Dashboard")) {
             margined false
-            
+
             vertical_box {
               horizontal_box {
                 stretchy false
-                
+
                 # filler
                 label
                 label
-    
+
                 vertical_box {
                   horizontal_box {
                     label(t("PollingInterval")) {
                       stretchy false
                     }
-    
+
                     label {
                       text <= [job_manager, :polling_interval,
                         on_read: ->(val) { "#{val} sec" }]
                     }
                   }
-    
+
                   slider(1, 10) {
                     value <=> [job_manager, :polling_interval]
                   }
                 }
               }
-              
+
               dashboard_graph(job_manager: job_manager)
             }
           }
@@ -51,7 +51,6 @@ module Kuiq
           global_stats(group_title: "Redis", model: job_manager.redis_info, attributes: Model::JobManager::REDIS_PROPERTIES) {
             stretchy false
           }
-          
 
           horizontal_separator {
             stretchy false

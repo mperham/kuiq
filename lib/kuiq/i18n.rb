@@ -3,7 +3,7 @@
 module Kuiq
   class I18n
     LOCALES = "./locales"
-    
+
     class << self
       # Use Sidekiq's i18n with locale files in sidekiq/web/locales
       # Note task in Rakefile to refresh locale files.
@@ -20,7 +20,7 @@ module Kuiq
           end
         end
       end
-    
+
       # Translates msg string for current locale (e.g. for "Dashboard", we get "Tableau de Bord" in fr)
       def t(msg, options = {})
         string = strings(current_locale)[msg] || msg
@@ -30,11 +30,11 @@ module Kuiq
           string % options
         end
       end
-    
+
       # Inverse-translates msg string for current locale (e.g. for "Tableau de Bord" in fr, we get "Dashboard")
       def it(msg, options = {})
         inverted_strings = inverted_strings(current_locale)
-        msg_without_underscores = msg.to_s.sub('_', ' ')
+        msg_without_underscores = msg.to_s.sub("_", " ")
         string = inverted_strings[msg] || inverted_strings[msg_without_underscores] || msg
         if options.empty?
           string
@@ -42,7 +42,7 @@ module Kuiq
           string % options
         end
       end
-  
+
       private def strings(lang)
         @strings ||= {}
         @strings[lang] ||= [LOCALES].each_with_object({}) do |path, global|
@@ -52,7 +52,7 @@ module Kuiq
           end
         end
       end
-  
+
       private def inverted_strings(lang)
         @inverted_strings ||= {}
         @inverted_strings[lang] ||= strings(lang).invert

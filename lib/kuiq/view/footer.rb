@@ -15,8 +15,8 @@ module Kuiq
           }
           label {
             stretchy false
-            
-            text <= [job_manager, :current_time, on_read: -> (val) { val.strftime("%T UTC") }]
+
+            text <= [job_manager, :current_time, on_read: ->(val) { val.strftime("%T UTC") }]
           }
           label(I18n.current_locale) {
             stretchy false

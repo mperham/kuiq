@@ -12,7 +12,7 @@ end
 
 require "standard/rake"
 
-task default: %i[test standard]
+task default: %i[test standard:fix]
 
 task :refresh_locales do
   FileUtils.cp_r "../sidekiq/web/locales", "."
