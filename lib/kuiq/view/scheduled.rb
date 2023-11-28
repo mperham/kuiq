@@ -5,13 +5,13 @@ require "kuiq/view/footer"
 module Kuiq
   module View
     class Scheduled
-      include Kuiq::Control
+      include Glimmer::LibUI::CustomControl
 
       option :job_manager
 
       body {
         vertical_box {
-          global_stats(model: job_manager, attributes: Model::Job::STATUSES) {
+          global_stats(group_title: t("Summary"), model: job_manager, attributes: Model::Job::STATUSES) {
             stretchy false
           }
 

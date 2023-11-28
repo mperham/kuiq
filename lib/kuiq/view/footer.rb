@@ -1,7 +1,7 @@
 module Kuiq
   module View
     class Footer
-      include Kuiq::Control
+      include Glimmer::LibUI::CustomControl
 
       option :job_manager
 
@@ -13,13 +13,12 @@ module Kuiq
           label(job_manager.redis_url) {
             stretchy false
           }
-          label(job_manager.current_time.strftime("%T UTC")) {
+          label {
             stretchy false
+            
+            text <= [job_manager, :current_time, on_read: -> (val) { val.strftime("%T UTC") }]
           }
-          label("docs") {
-            stretchy false
-          }
-          label(job_manager.locale) {
+          label(I18n.current_locale) {
             stretchy false
           }
         }

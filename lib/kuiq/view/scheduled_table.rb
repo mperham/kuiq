@@ -1,7 +1,7 @@
 module Kuiq
   module View
     class ScheduledTable
-      include Kuiq::Control
+      include Glimmer::LibUI::CustomControl
 
       option :job_manager
 

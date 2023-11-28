@@ -3,7 +3,8 @@ require "sidekiq/api"
 require "glimmer-dsl-libui"
 
 require "kuiq"
-require "kuiq/control"
+require "kuiq/i18n"
+require "kuiq/ext/kernel"
 require "kuiq/model/job_manager"
 require "kuiq/view/dashboard"
 require "kuiq/view/retries"
@@ -12,10 +13,9 @@ require "kuiq/view/scheduled"
 module Kuiq
   class SidekiqUI
     include Glimmer::LibUI::Application
-    include Kuiq::Control
 
     before_body do
-      logger.info { "Welcome to Kuiq #{Kuiq::VERSION}, using the #{current_locale.upcase} locale" }
+      logger.info { "Welcome to Kuiq #{Kuiq::VERSION}, using the #{I18n.current_locale.upcase} locale" }
       logger.info { RUBY_DESCRIPTION }
 
       @job_manager = Model::JobManager.new
