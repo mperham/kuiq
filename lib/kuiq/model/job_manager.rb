@@ -7,17 +7,14 @@ module Kuiq
       REDIS_PROPERTIES = %w[redis_version uptime_in_days connected_clients used_memory_human used_memory_peak_human]
 
       attr_accessor :jobs, :polling_interval
-      attr_reader :redis_url, :current_time, :docs_url, :locale, :locale_url, :redis_info
+      attr_reader :redis_url, :redis_info, :current_time
 
       def initialize
         @jobs = []
         @polling_interval = 5
         @redis_url = Sidekiq.redis { |c| c.config.server_url }
-        @current_time = Time.now.utc
-        @docs_url = "https://github.com/sidekiq/sidekiq/wiki"
-        @locale_url = "https://github.com/sidekiq/sidekiq/tree/main/web/locales"
-        @locale = "en"
         @redis_info = Sidekiq.default_configuration.redis_info
+        @current_time = Time.now.utc
       end
 
       def stats
@@ -73,9 +70,14 @@ module Kuiq
       end
 
       def refresh
-        @current_time = Time.now.utc
+        refresh_time
         refresh_stats
         refresh_redis_properties
+      end
+      
+      def refresh_time
+        @current_time = Time.now.utc
+        notify_observers(:current_time)
       end
 
       def refresh_stats
