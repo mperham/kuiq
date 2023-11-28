@@ -2,6 +2,8 @@
 
 $LOAD_PATH.unshift File.expand_path(File.join(__dir__, '..', 'lib'))
 
-require "kuiq/sidekiq_ui"
+require "kuiq/cli"
 
-Kuiq::SidekiqUI.launch
+cli = Kuiq::CLI.instance
+cli.parse
+cli.run
