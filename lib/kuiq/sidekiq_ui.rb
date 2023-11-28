@@ -7,6 +7,7 @@ require "kuiq/i18n"
 require "kuiq/ext/kernel"
 require "kuiq/model/job_manager"
 require "kuiq/view/dashboard"
+require "kuiq/view/busy"
 require "kuiq/view/retries"
 require "kuiq/view/scheduled"
 
@@ -34,8 +35,9 @@ module Kuiq
               dashboard(job_manager: @job_manager)
             }
             # TODO enable each tab when implemented (only implemented ones will be visible)
-            #           tab_item("Busy") {
-            #           }
+            # tab_item("Busy") {
+            #   busy(job_manager: @job_manager)
+            # }
             #           tab_item("Queues") {
             #           }
             tab_item(t("Retries")) {

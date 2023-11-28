@@ -17,17 +17,17 @@ module Kuiq
         @current_time = Time.now.utc
       end
 
-      def stats
-        # do not cache in a variable to ensure getting the latest values when calling methods
-        # off of the Status object (e.g. when calling stats.processed)
-        Sidekiq::Stats.new
-      end
+      def stats = @stats ||= Sidekiq::Stats.new
+
+      def process_set = @process_set ||= Sidekiq::ProcessSet.new
+
+      def work_set = @work_set ||= Sidekiq::WorkSet.new
 
       def processed = stats.processed
 
       def failed = stats.failed
 
-      def busy = Sidekiq::WorkSet.new.size
+      def busy = work_set.size
 
       def enqueued = stats.enqueued
 
@@ -37,27 +37,36 @@ module Kuiq
 
       def dead = stats.dead_size
 
+      def process_size = process_set.size
+
+      def total_concurrency = process_set.total_concurrency
+
+      def total_rss = process_set.total_rss
+
+      def utilization
+        x = total_concurrency
+        ws = busy
+        x.zero? ? 0 : ((ws / x.to_f) * 100).round(0)
+      end
+
       def retried_jobs
         # Data will get lazy loaded into the table as the user scrolls through.
         # After data is built, it is cached long-term, till updating table `cell_rows`.
-        key = "retry"
-        count = retries
-        Enumerator::Lazy.new(count.times, count) do |yielder, index|
-          page = index + 1
-          count = 1
-          job_redis_hash_json, score = Paginator.instance.page(key, page, 1).last.reject { |j| j.is_a?(Numeric) }.first
-          if job_redis_hash_json
-            job_redis_hash = JSON.parse(job_redis_hash_json)
-            yielder << Job.new(job_redis_hash, score, index)
-          end
-        end
+        sorted_jobs(Sidekiq::RetrySet)
       end
 
       def scheduled_jobs
-        # Data will get lazy loaded into the table as the user scrolls through.
-        # After data is built, it is cached long-term, till updating table `cell_rows`.
-        key = "schedule"
-        count = scheduled
+        sorted_jobs(Sidekiq::ScheduledSet)
+      end
+
+      def dead_jobs
+        sorted_jobs(Sidekiq::DeadSet)
+      end
+
+      def sorted_jobs(klass)
+        inst = klass.new
+        key = inst.name
+        count = inst.size
         Enumerator::Lazy.new(count.times, count) do |yielder, index|
           page = index + 1
           count = 1
@@ -74,13 +83,14 @@ module Kuiq
         refresh_stats
         refresh_redis_properties
       end
-      
+
       def refresh_time
         @current_time = Time.now.utc
         notify_observers(:current_time)
       end
 
       def refresh_stats
+        @process_set = @work_set = @stats = nil
         Job::STATUSES.each do |status|
           # notify_observers is added automatically by Glimmer when data-binding
           # it enables manually triggering data-binding changes when needed
@@ -123,6 +133,23 @@ module Kuiq
             point[0] = point[0] - x_translation
           end
         end
+      end
+
+      def format_memory(rss_kb)
+        return "0" if rss_kb.nil? || rss_kb == 0
+
+        if rss_kb < 100_000
+          "#{number_with_delimiter(rss_kb)} KB"
+        elsif rss_kb < 10_000_000
+          "#{number_with_delimiter((rss_kb / 1024.0).to_i)} MB"
+        else
+          "#{number_with_delimiter((rss_kb / (1024.0 * 1024.0)), precision: 1)} GB"
+        end
+      end
+
+      def number_with_delimiter(number, options = {})
+        precision = options[:precision] || 0
+        number.round(precision)
       end
     end
   end
