@@ -1,5 +1,3 @@
-require "glimmer-dsl-libui"
-
 require "kuiq"
 require "kuiq/i18n"
 require "kuiq/ext/kernel"

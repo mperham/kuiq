@@ -4,6 +4,7 @@ require "sidekiq"
 require "sidekiq/api"
 require "kuiq/version"
 require "kuiq/i18n"
+require "glimmer-dsl-libui"
 
 module Kuiq
   class CLI
@@ -36,6 +37,7 @@ module Kuiq
       logger.info { "Kuiq #{Kuiq::VERSION}, using the #{I18n.current_locale.upcase} locale" }
       logger.info { RUBY_DESCRIPTION }
       logger.info { "Redis client #{RedisClient::VERSION}, server #{Sidekiq.default_configuration.redis_info["redis_version"]}" }
+      logger.info { "LibUI #{::LibUI::VERSION}, Glimmer <unknown>" }
 
       send(@options[:action])
     end
