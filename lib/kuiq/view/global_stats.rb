@@ -6,14 +6,19 @@ module Kuiq
     class GlobalStats
       include Kuiq::Control
 
+      option :group_title
       option :model
       option :attributes
 
       body {
-        horizontal_box {
-          attributes.each do |attribute|
-            global_stat(model: model, attribute: attribute)
-          end
+        group(group_title) {
+          margined false
+          
+          horizontal_box {
+            attributes.each do |attribute|
+              global_stat(model: model, attribute: attribute)
+            end
+          }
         }
       }
     end

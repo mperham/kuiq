@@ -11,7 +11,7 @@ module Kuiq
 
       body {
         vertical_box {
-          global_stats(model: job_manager, attributes: Model::Job::STATUSES) {
+          global_stats(group_title: t("Summary"), model: job_manager, attributes: Model::Job::STATUSES) {
             stretchy false
           }
 
