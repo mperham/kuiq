@@ -1,13 +1,14 @@
 module Kuiq
   module View
     class GlobalStat
-      include Kuiq::Control
+      include Glimmer::LibUI::CustomControl
 
       ATTRIBUTE_CUSTOM_TEXT = {
+        "redis_version" => "Version",
         "uptime_in_days" => "Uptime",
         "connected_clients" => "Connections",
-        "used_memory_human" => "Used Memory",
-        "used_memory_peak_human" => "Peak Used Memory"
+        "used_memory_human" => "MemoryUsage",
+        "used_memory_peak_human" => "PeakMemoryUsage"
       }
 
       option :model

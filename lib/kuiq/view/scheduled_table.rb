@@ -1,7 +1,7 @@
 module Kuiq
   module View
     class ScheduledTable
-      include Kuiq::Control
+      include Glimmer::LibUI::CustomControl
 
       option :job_manager
 
@@ -12,6 +12,7 @@ module Kuiq
           text_column(t("Job"))
           text_column(t("Arguments"))
 
+          # TODO fix issue with translated columns breaking table data-binding conventions
           cell_rows job_manager.scheduled_jobs
         }
       }

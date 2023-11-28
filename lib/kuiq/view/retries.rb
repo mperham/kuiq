@@ -5,7 +5,7 @@ require "kuiq/view/footer"
 module Kuiq
   module View
     class Retries
-      include Kuiq::Control
+      include Glimmer::LibUI::CustomControl
 
       option :job_manager
 
