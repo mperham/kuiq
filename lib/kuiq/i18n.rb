@@ -23,7 +23,7 @@ module Kuiq
     
       # Translates msg string for current locale (e.g. for "Dashboard", we get "Tableau de Bord" in fr)
       def t(msg, options = {})
-        string = strings(Kuiq::I18n.current_locale)[msg] || strings("en")[msg] || msg
+        string = strings(current_locale)[msg] || msg
         if options.empty?
           string
         else
@@ -33,14 +33,9 @@ module Kuiq
     
       # Inverse-translates msg string for current locale (e.g. for "Tableau de Bord" in fr, we get "Dashboard")
       def it(msg, options = {})
-        inverted_strings = strings(Kuiq::I18n.current_locale).invert
-        inverted_english_strings = strings("en").invert
+        inverted_strings = inverted_strings(current_locale)
         msg_without_underscores = msg.to_s.sub('_', ' ')
-        string = inverted_strings[msg] ||
-                   inverted_strings[msg_without_underscores] ||
-                   inverted_english_strings[msg] ||
-                   inverted_english_strings[msg_without_underscores] ||
-                   msg
+        string = inverted_strings[msg] || inverted_strings[msg_without_underscores] || msg
         if options.empty?
           string
         else
@@ -58,16 +53,10 @@ module Kuiq
         end
       end
   
-      # TODO optimize performance with caching
-#       private def inverted_strings(lang)
-#         @strings ||= {}
-#         @strings[lang] ||= [LOCALES].each_with_object({}) do |path, global|
-#           Dir["#{path}/#{lang}.yml"].each do |file|
-#             strs = YAML.safe_load_file(file)
-#             global.merge!(strs[lang])
-#           end
-#         end
-#       end
+      private def inverted_strings(lang)
+        @inverted_strings ||= {}
+        @inverted_strings[lang] ||= strings(lang).invert
+      end
     end
   end
 end
