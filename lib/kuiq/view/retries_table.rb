@@ -14,7 +14,6 @@ module Kuiq
           text_column(t("Arguments"))
           text_column(t("Error"))
 
-          # TODO fix issue with translated columns breaking table data-binding conventions
           cell_rows job_manager.retried_jobs
         }
       }

@@ -15,7 +15,6 @@ module Kuiq
       option :attribute
 
       before_body do
-        # TODO i18n the text of each attribute
         @attribute_text = ATTRIBUTE_CUSTOM_TEXT[attribute.to_s] || humanize(attribute)
       end
 
