@@ -40,24 +40,21 @@ module Kuiq
       def retried_jobs
         # Data will get lazy loaded into the table as the user scrolls through.
         # After data is built, it is cached long-term, till updating table `cell_rows`.
-        key = "retry"
-        count = retries
-        Enumerator::Lazy.new(count.times, count) do |yielder, index|
-          page = index + 1
-          count = 1
-          job_redis_hash_json, score = Paginator.instance.page(key, page, 1).last.reject { |j| j.is_a?(Numeric) }.first
-          if job_redis_hash_json
-            job_redis_hash = JSON.parse(job_redis_hash_json)
-            yielder << Job.new(job_redis_hash, score, index)
-          end
-        end
+        sorted_jobs(Sidekiq::RetrySet)
       end
 
       def scheduled_jobs
-        # Data will get lazy loaded into the table as the user scrolls through.
-        # After data is built, it is cached long-term, till updating table `cell_rows`.
-        key = "schedule"
-        count = scheduled
+        sorted_jobs(Sidekiq::ScheduledSet)
+      end
+
+      def dead_jobs
+        sorted_jobs(Sidekiq::DeadSet)
+      end
+
+      def sorted_jobs(klass)
+        inst = klass.new
+        key = inst.name
+        count = inst.size
         Enumerator::Lazy.new(count.times, count) do |yielder, index|
           page = index + 1
           count = 1
@@ -74,7 +71,7 @@ module Kuiq
         refresh_stats
         refresh_redis_properties
       end
-      
+
       def refresh_time
         @current_time = Time.now.utc
         notify_observers(:current_time)

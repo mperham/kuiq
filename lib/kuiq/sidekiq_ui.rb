@@ -9,6 +9,7 @@ require "kuiq/model/job_manager"
 require "kuiq/view/dashboard"
 require "kuiq/view/retries"
 require "kuiq/view/scheduled"
+require "kuiq/view/morgue"
 
 module Kuiq
   class SidekiqUI
@@ -44,8 +45,9 @@ module Kuiq
             tab_item(t("Scheduled")) {
               scheduled(job_manager: @job_manager)
             }
-            #           tab_item("Dead") {
-            #           }
+            tab_item(t("Dead")) {
+              morgue(job_manager: @job_manager)
+            }
             #           tab_item("Metrics") {
             #           }
           }
