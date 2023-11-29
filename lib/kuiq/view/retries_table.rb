@@ -14,7 +14,16 @@ module Kuiq
           text_column(t("Arguments"))
           text_column(t("Error"))
 
-          cell_rows job_manager.retried_jobs
+          cell_rows <= [job_manager, :retried_jobs,
+                         column_attributes: {
+                           t("NextRetry") => :next_retry,
+                           t("RetryCount") => :retry_count,
+                           t("Queue") => :queue,
+                           t("Job") => :job,
+                           t("Arguments") => :arguments,
+                           t("Error") => :error,
+                         }
+                       ]
         }
       }
     end

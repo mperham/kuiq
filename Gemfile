@@ -2,7 +2,7 @@
 
 source "https://rubygems.org"
 
-gem "glimmer-dsl-libui", "= 0.11.4"
+gem "glimmer-dsl-libui", "= 0.11.5"
 gem "sidekiq"
 gem "chronic_duration", ">= 0.10.6", "< 2.0.0"
 

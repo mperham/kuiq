@@ -21,7 +21,15 @@ module Kuiq
             text_column(t("Arguments"))
             text_column(t("Error"))
 
-            cell_rows job_manager.dead_jobs
+            cell_rows <= [job_manager, :dead_jobs,
+                           column_attributes: {
+                             t("When") => :when,
+                             t("Queue") => :queue,
+                             t("Job") => :job,
+                             t("Arguments") => :arguments,
+                             t("Error") => :error,
+                           }
+                         ]
           }
 
           horizontal_separator {
