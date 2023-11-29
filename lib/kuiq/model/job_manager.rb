@@ -55,10 +55,16 @@ module Kuiq
         inst = klass.new
         key = inst.name
         count = inst.size
+        page_size = 25
+        page_data_cache = nil
         Enumerator::Lazy.new(count.times, count) do |yielder, index|
-          page = index + 1
+          page_index = index/page_size
+          page = page_index + 1
+          index_within_page = index % page_size
           count = 1
-          job_redis_hash_json, score = Paginator.instance.page(key, page, 1).last.reject { |j| j.is_a?(Numeric) }.first
+          page_data_cache = nil if index_within_page == 0
+          page_data_cache ||= Paginator.instance.page(key, page, page_size)
+          job_redis_hash_json, score = page_data_cache.last.reject { |j| j.is_a?(Numeric) }[index_within_page]
           if job_redis_hash_json
             job_redis_hash = JSON.parse(job_redis_hash_json)
             yielder << Job.new(job_redis_hash, score, index)
