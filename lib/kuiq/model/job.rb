@@ -46,18 +46,12 @@ module Kuiq
 
       def respond_to_missing?(method_name, include_private = false)
         super ||
-          redis_hash.include?(it(method_name.to_s.capitalize).downcase) ||
           redis_hash.include?(method_name.to_s)
       end
 
       def method_missing(method_name, *args, &block)
-        inverse_translated_method_name = it(method_name.to_s.capitalize).underscore
         if redis_hash.include?(method_name.to_s)
           redis_hash[method_name.to_s].to_s
-        elsif respond_to?(inverse_translated_method_name) && !redis_hash.include?(inverse_translated_method_name)
-          send(inverse_translated_method_name)
-        elsif redis_hash.include?(inverse_translated_method_name)
-          redis_hash[inverse_translated_method_name].to_s
         else
           super
         end

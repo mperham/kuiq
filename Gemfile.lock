@@ -15,7 +15,7 @@ GEM
     glimmer (2.7.3)
       array_include_methods (~> 1.4.0)
       facets (>= 3.1.0, < 4.0.0)
-    glimmer-dsl-libui (0.11.4)
+    glimmer-dsl-libui (0.11.5)
       chunky_png (~> 1.4.0)
       color (~> 1.8)
       equalizer (= 0.0.11)
@@ -118,7 +118,7 @@ PLATFORMS
 
 DEPENDENCIES
   chronic_duration (>= 0.10.6, < 2.0.0)
-  glimmer-dsl-libui (= 0.11.4)
+  glimmer-dsl-libui (= 0.11.5)
   minitest
   rake
   sidekiq
