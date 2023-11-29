@@ -58,7 +58,7 @@ module Kuiq
         page_size = 25
         page_data_cache = nil
         Enumerator::Lazy.new(count.times, count) do |yielder, index|
-          page_index = index/page_size
+          page_index = index / page_size
           page = page_index + 1
           index_within_page = index % page_size
           count = 1
