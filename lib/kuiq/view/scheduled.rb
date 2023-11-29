@@ -1,5 +1,4 @@
 require "kuiq/view/global_stats"
-require "kuiq/view/scheduled_table"
 require "kuiq/view/footer"
 
 module Kuiq
@@ -15,7 +14,20 @@ module Kuiq
             stretchy false
           }
 
-          scheduled_table(job_manager: job_manager)
+          table {
+            text_column(t("When"))
+            text_column(t("Queue"))
+            text_column(t("Job"))
+            text_column(t("Arguments"))
+
+            cell_rows <= [job_manager, :scheduled_jobs,
+              column_attributes: {
+                t("When") => :when,
+                t("Queue") => :queue,
+                t("Job") => :job,
+                t("Arguments") => :arguments
+              }]
+          }
 
           horizontal_separator {
             stretchy false
