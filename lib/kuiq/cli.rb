@@ -29,7 +29,7 @@ module Kuiq
     end
 
     def gui
-      require "kuiq/gui"
+      require "kuiq/view/kuiq_application"
       Kuiq::GUI.launch
     end
 
