@@ -98,7 +98,7 @@ module Kuiq
           redis_info.notify_observers(property)
         end
       end
-      
+
       def record_stats
         @processed_stats.prepend({time: Time.now.utc.strftime("%H:%M:%S UTC"), processed: processed})
         @processed_stats = @processed_stats[0, 61]
@@ -110,10 +110,10 @@ module Kuiq
         return points if current_jobs.size <= 1
         current_jobs.each_with_index do |job, n|
           next if n == 0
-          jobs_processed = current_jobs[n-1][:processed] - job[:processed]
+          jobs_processed = current_jobs[n - 1][:processed] - job[:processed]
           jobs_processed = [jobs_processed, GRAPH_MAX_PROCESSED].min
           x = GRAPH_WIDTH - ((n - 1) * GRAPH_POINT_DISTANCE) - GRAPH_PADDING_WIDTH
-          y = ((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) - jobs_processed*((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT*2)/GRAPH_MAX_PROCESSED))
+          y = ((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) - jobs_processed * ((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT * 2) / GRAPH_MAX_PROCESSED))
           points << [x, y]
         end
         translate_points(points)

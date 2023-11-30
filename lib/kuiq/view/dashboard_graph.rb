@@ -42,11 +42,11 @@ module Kuiq
             last_point = nil
             job_manager.report_points.each do |point|
               circle(point.first, point.last, 3) {
-                fill *GRAPH_DASHBOARD_COLOR
+                fill(*GRAPH_DASHBOARD_COLOR)
               }
               if last_point
                 line(last_point.first, last_point.last, point.first, point.last) {
-                  stroke *GRAPH_DASHBOARD_COLOR, thickness: 2
+                  stroke(*GRAPH_DASHBOARD_COLOR, thickness: 2)
                 }
               end
               last_point = point
