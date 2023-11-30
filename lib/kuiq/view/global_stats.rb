@@ -13,7 +13,7 @@ module Kuiq
       body {
         group(group_title) {
           margined false
-          
+
           horizontal_box {
             attributes.each do |attribute|
               global_stat(model: model, attribute: attribute)

@@ -25,4 +25,28 @@ module Kernel
   def it(msg, options = {})
     Kuiq::I18n.it(msg, options)
   end
+
+  def timeago_in_words(from_time, to_time = Time.now)
+    from_time, to_time = to_time, from_time if from_time > to_time
+    distance_in_minutes = ((to_time - from_time) / 60.0).round
+    distance_in_seconds = (to_time - from_time).round
+
+    case distance_in_minutes
+    when 0
+      case distance_in_seconds
+      when ..4 then "0s"
+      when 5..9 then "5s"
+      when 10..19 then "15s"
+      when 20..39 then "30s"
+      else "1m"
+      end
+
+    when 1...90
+      "#{distance_in_minutes}m"
+    when 90...2520
+      "#{(distance_in_minutes.to_f / 60.0).round}h"
+    else
+      "#{(distance_in_minutes.to_f / 1440.0).round}d"
+    end
+  end
 end

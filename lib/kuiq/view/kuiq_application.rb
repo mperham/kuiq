@@ -1,7 +1,3 @@
-require "sidekiq"
-require "sidekiq/api"
-require "glimmer-dsl-libui"
-
 require "kuiq"
 require "kuiq/i18n"
 require "kuiq/ext/kernel"
@@ -10,25 +6,18 @@ require "kuiq/view/dashboard"
 require "kuiq/view/busy"
 require "kuiq/view/retries"
 require "kuiq/view/scheduled"
+require "kuiq/view/morgue"
 
 module Kuiq
-  class SidekiqUI
+  class GUI
     include Glimmer::LibUI::Application
 
     before_body do
-      logger.info { "Welcome to Kuiq #{Kuiq::VERSION}, using the #{I18n.current_locale.upcase} locale" }
-      logger.info { RUBY_DESCRIPTION }
-
       @job_manager = Model::JobManager.new
-      logger.info { "Redis client #{RedisClient::VERSION}, server #{@job_manager.redis_info["redis_version"]}" }
-    end
-
-    after_body do
-      # generate_jobs
     end
 
     body {
-      window("Sidekiq UI", WINDOW_WIDTH, WINDOW_HEIGHT) {
+      window("Kuiq - Sidekiq UI", WINDOW_WIDTH, WINDOW_HEIGHT) {
         vertical_box {
           tab {
             tab_item(t("Dashboard")) {
@@ -46,8 +35,9 @@ module Kuiq
             tab_item(t("Scheduled")) {
               scheduled(job_manager: @job_manager)
             }
-            #           tab_item("Dead") {
-            #           }
+            tab_item(t("Dead")) {
+              morgue(job_manager: @job_manager)
+            }
             #           tab_item("Metrics") {
             #           }
           }

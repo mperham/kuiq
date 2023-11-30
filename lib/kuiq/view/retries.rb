@@ -1,5 +1,4 @@
 require "kuiq/view/global_stats"
-require "kuiq/view/retries_table"
 require "kuiq/view/footer"
 
 module Kuiq
@@ -15,7 +14,24 @@ module Kuiq
             stretchy false
           }
 
-          retries_table(job_manager: job_manager)
+          table {
+            text_column(t("NextRetry"))
+            text_column(t("RetryCount"))
+            text_column(t("Queue"))
+            text_column(t("Job"))
+            text_column(t("Arguments"))
+            text_column(t("Error"))
+
+            cell_rows <= [job_manager, :retried_jobs,
+              column_attributes: {
+                t("NextRetry") => :next_retry,
+                t("RetryCount") => :retry_count,
+                t("Queue") => :queue,
+                t("Job") => :job,
+                t("Arguments") => :arguments,
+                t("Error") => :error
+              }]
+          }
 
           horizontal_separator {
             stretchy false

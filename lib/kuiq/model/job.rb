@@ -14,19 +14,16 @@ module Kuiq
         @index = index
       end
 
-      def next_retry
-        next_retry_time = sorted_entry.at
-        time_duration_until_next_retry = (next_retry_time - Time.now).to_i
-        if time_duration_until_next_retry < 0
-          "Just now"
-        elsif time_duration_until_next_retry < 10
-          "Right now"
-        else
-          chronic_output = ChronicDuration.output(time_duration_until_next_retry, format: :short)
-          "In #{chronic_output}"
-        end
+      def at
+        Time.at(score).utc
       end
-      alias_method :when, :next_retry
+
+      def at_s
+        timeago_in_words(at)
+      end
+      alias_method :next_retry, :at_s
+      alias_method :when, :at_s
+      alias_method :last_retry, :at_s
 
       def job
         redis_hash["class"]
@@ -46,18 +43,12 @@ module Kuiq
 
       def respond_to_missing?(method_name, include_private = false)
         super ||
-          redis_hash.include?(it(method_name.to_s.capitalize).downcase) ||
           redis_hash.include?(method_name.to_s)
       end
 
       def method_missing(method_name, *args, &block)
-        inverse_translated_method_name = it(method_name.to_s.capitalize).underscore
         if redis_hash.include?(method_name.to_s)
           redis_hash[method_name.to_s].to_s
-        elsif respond_to?(inverse_translated_method_name) && !redis_hash.include?(inverse_translated_method_name)
-          send(inverse_translated_method_name)
-        elsif redis_hash.include?(inverse_translated_method_name)
-          redis_hash[inverse_translated_method_name].to_s
         else
           super
         end

@@ -3,7 +3,7 @@ require "kuiq/view/footer"
 
 module Kuiq
   module View
-    class Scheduled
+    class Morgue
       include Glimmer::LibUI::CustomControl
 
       option :job_manager
@@ -15,17 +15,19 @@ module Kuiq
           }
 
           table {
-            text_column(t("When"))
+            text_column(t("LastRetry"))
             text_column(t("Queue"))
             text_column(t("Job"))
             text_column(t("Arguments"))
+            text_column(t("Error"))
 
-            cell_rows <= [job_manager, :scheduled_jobs,
+            cell_rows <= [job_manager, :dead_jobs,
               column_attributes: {
-                t("When") => :when,
+                t("LastRetry") => :last_retry,
                 t("Queue") => :queue,
                 t("Job") => :job,
-                t("Arguments") => :arguments
+                t("Arguments") => :arguments,
+                t("Error") => :error
               }]
           }
 

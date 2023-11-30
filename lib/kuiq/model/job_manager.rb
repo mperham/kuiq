@@ -6,15 +6,15 @@ module Kuiq
     class JobManager
       REDIS_PROPERTIES = %w[redis_version uptime_in_days connected_clients used_memory_human used_memory_peak_human]
 
-      attr_accessor :jobs, :polling_interval
+      attr_accessor :polling_interval
       attr_reader :redis_url, :redis_info, :current_time
 
       def initialize
-        @jobs = []
-        @polling_interval = 5
+        @polling_interval = 1
         @redis_url = Sidekiq.redis { |c| c.config.server_url }
         @redis_info = Sidekiq.default_configuration.redis_info
         @current_time = Time.now.utc
+        @processed_stats = []
       end
 
       def stats = @stats ||= Sidekiq::Stats.new
@@ -67,10 +67,16 @@ module Kuiq
         inst = klass.new
         key = inst.name
         count = inst.size
+        page_size = 25
+        page_data_cache = nil
         Enumerator::Lazy.new(count.times, count) do |yielder, index|
-          page = index + 1
+          page_index = (index / page_size)
+          page = page_index + 1
+          index_within_page = index % page_size
           count = 1
-          job_redis_hash_json, score = Paginator.instance.page(key, page, 1).last.reject { |j| j.is_a?(Numeric) }.first
+          page_data_cache = nil if index_within_page == 0
+          page_data_cache ||= Paginator.instance.page(key, page, page_size)
+          job_redis_hash_json, score = page_data_cache.last.reject { |j| j.is_a?(Numeric) }[index_within_page]
           if job_redis_hash_json
             job_redis_hash = JSON.parse(job_redis_hash_json)
             yielder << Job.new(job_redis_hash, score, index)
@@ -106,19 +112,21 @@ module Kuiq
         end
       end
 
+      def record_stats
+        @processed_stats.prepend({time: Time.now.utc.strftime("%H:%M:%S UTC"), processed: processed})
+        @processed_stats = @processed_stats[0, 61]
+      end
+
       def report_points
         points = []
-        current_jobs = jobs.dup
-        start_time = @current_time
-        end_time = Time.now
-        time_length = (end_time - start_time).to_i
-        time_length.times do |n|
-          job_found = current_jobs.detect do |job|
-            job_delay = job.time - start_time
-            job_delay.between?(n, n + 1)
-          end
-          x = n * 15
-          y = job_found ? 5 : 195
+        current_jobs = @processed_stats
+        return points if current_jobs.size <= 1
+        current_jobs.each_with_index do |job, n|
+          next if n == 0
+          jobs_processed = current_jobs[n - 1][:processed] - job[:processed]
+          jobs_processed = [jobs_processed, GRAPH_MAX_PROCESSED].min
+          x = GRAPH_WIDTH - ((n - 1) * GRAPH_POINT_DISTANCE) - GRAPH_PADDING_WIDTH
+          y = ((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) - jobs_processed * ((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT * 2) / GRAPH_MAX_PROCESSED))
           points << [x, y]
         end
         translate_points(points)
@@ -126,8 +134,8 @@ module Kuiq
       end
 
       def translate_points(points)
-        max_job_count_before_translation = ((800 / 15).to_i + 1)
-        x_translation = [(points.size - max_job_count_before_translation) * 15, 0].max
+        max_job_count_before_translation = ((GRAPH_WIDTH / GRAPH_POINT_DISTANCE).to_i + 1)
+        x_translation = [(points.size - max_job_count_before_translation) * GRAPH_POINT_DISTANCE, 0].max
         if x_translation > 0
           points.each do |point|
             point[0] = point[0] - x_translation
