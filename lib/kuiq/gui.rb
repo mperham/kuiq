@@ -15,10 +15,6 @@ module Kuiq
       @job_manager = Model::JobManager.new
     end
 
-    after_body do
-      # generate_jobs
-    end
-
     body {
       window("Sidekiq UI", WINDOW_WIDTH, WINDOW_HEIGHT) {
         vertical_box {
