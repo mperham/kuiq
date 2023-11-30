@@ -16,7 +16,7 @@ module Kuiq
     end
 
     body {
-      window("Sidekiq UI", WINDOW_WIDTH, WINDOW_HEIGHT) {
+      window("Kuiq - Sidekiq UI", WINDOW_WIDTH, WINDOW_HEIGHT) {
         vertical_box {
           tab {
             tab_item(t("Dashboard")) {
