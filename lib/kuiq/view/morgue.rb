@@ -15,7 +15,7 @@ module Kuiq
           }
 
           table {
-            text_column(t("When"))
+            text_column(t("LastRetry"))
             text_column(t("Queue"))
             text_column(t("Job"))
             text_column(t("Arguments"))
@@ -23,7 +23,7 @@ module Kuiq
 
             cell_rows <= [job_manager, :dead_jobs,
               column_attributes: {
-                t("When") => :when,
+                t("LastRetry") => :last_retry,
                 t("Queue") => :queue,
                 t("Job") => :job,
                 t("Arguments") => :arguments,
