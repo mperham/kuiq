@@ -26,8 +26,7 @@ module Kuiq
               text_column(t("Threads"))
               text_column(t("Busy"))
 
-              # cell_rows job_manager.process_set.lazy
-              cell_rows <=> [job_manager.process_set, :lazy, column_attributes: {
+              cell_rows <= [job_manager, :process_set, column_attributes: {
                 t("Name") => :identity,
                 t("Started") => :started_at,
                 t("RSS") => :rss,
@@ -48,13 +47,14 @@ module Kuiq
               text_column(t("Arguments"))
               text_column(t("Started"))
 
-              # cell_rows job_manager.process_set.lazy
-              cell_rows <=> [job_manager.work_set, :lazy, column_attributes: {
-                t("Name") => :identity,
-                t("Started") => :started_at,
-                t("RSS") => :rss,
-                t("Threads") => :concurrency,
-                t("Busy") => :busy
+              cell_rows <= [job_manager, :work_set, column_attributes: {
+                t("Process") => :process,
+                t("TID") => :thread,
+                t("JID") => :jid,
+                t("Queue") => :queue,
+                t("Job") => :class,
+                t("Arguments") => :args,
+                t("Started") => :started_at
               }]
             }
           }

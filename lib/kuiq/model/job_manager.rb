@@ -1,4 +1,6 @@
 require "kuiq/model/job"
+require "kuiq/model/process"
+require "kuiq/model/work"
 require "kuiq/model/paginator"
 
 module Kuiq
@@ -19,9 +21,9 @@ module Kuiq
 
       def stats = @stats ||= Sidekiq::Stats.new
 
-      def process_set = @process_set ||= Sidekiq::ProcessSet.new
+      def process_set = @process_set ||= Kuiq::Model::ProcessSet.new
 
-      def work_set = @work_set ||= Sidekiq::WorkSet.new
+      def work_set = @work_set ||= Kuiq::Model::WorkSet.new
 
       def processed = stats.processed
 
