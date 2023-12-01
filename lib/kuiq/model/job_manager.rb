@@ -14,7 +14,6 @@ module Kuiq
         @redis_url = Sidekiq.redis { |c| c.config.server_url }
         @redis_info = Sidekiq.default_configuration.redis_info
         @current_time = Time.now.utc
-        @processed_stats = []
       end
 
       def stats
@@ -96,37 +95,6 @@ module Kuiq
           # notify_observers is added automatically by Glimmer when data-binding
           # it enables manually triggering data-binding changes when needed
           redis_info.notify_observers(property)
-        end
-      end
-
-      def record_stats
-        @processed_stats.prepend({time: Time.now.utc.strftime("%H:%M:%S UTC"), processed: processed})
-        @processed_stats = @processed_stats[0, 61]
-      end
-
-      def report_points
-        points = []
-        current_jobs = @processed_stats
-        return points if current_jobs.size <= 1
-        current_jobs.each_with_index do |job, n|
-          next if n == 0
-          jobs_processed = current_jobs[n - 1][:processed] - job[:processed]
-          jobs_processed = [jobs_processed, GRAPH_MAX_PROCESSED].min
-          x = GRAPH_WIDTH - ((n - 1) * GRAPH_POINT_DISTANCE) - GRAPH_PADDING_WIDTH
-          y = ((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) - jobs_processed * ((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT * 2) / GRAPH_MAX_PROCESSED))
-          points << [x, y]
-        end
-        translate_points(points)
-        points
-      end
-
-      def translate_points(points)
-        max_job_count_before_translation = ((GRAPH_WIDTH / GRAPH_POINT_DISTANCE).to_i + 1)
-        x_translation = [(points.size - max_job_count_before_translation) * GRAPH_POINT_DISTANCE, 0].max
-        if x_translation > 0
-          points.each do |point|
-            point[0] = point[0] - x_translation
-          end
         end
       end
     end
