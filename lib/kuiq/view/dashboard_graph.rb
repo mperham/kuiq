@@ -1,4 +1,5 @@
 require "kuiq"
+require "kuiq/model/dashboard_graph_presenter"
 
 module Kuiq
   module View
@@ -6,13 +7,19 @@ module Kuiq
       include Glimmer::LibUI::CustomControl
 
       option :job_manager
+      
+      attr_reader :presenter
+      
+      before_body do
+        @presenter = Model::DashboardGraphPresenter.new(job_manager)
+      end
 
       after_body do
         polling_interval = job_manager.polling_interval
         time_remaining = job_manager.polling_interval
         timer_interval = 1 # 1 second
         Glimmer::LibUI.timer(timer_interval) do
-          job_manager.record_stats
+          presenter.record_stats
           if polling_interval != job_manager.polling_interval
             if job_manager.polling_interval < polling_interval
               time_remaining = job_manager.polling_interval
@@ -39,21 +46,25 @@ module Kuiq
           }
 
           on_draw do
-            last_point = nil
-            job_manager.report_points.each do |point|
-              circle(point.first, point.last, 3) {
-                fill(*GRAPH_DASHBOARD_COLOR)
-              }
-              if last_point
-                line(last_point.first, last_point.last, point.first, point.last) {
-                  stroke(*GRAPH_DASHBOARD_COLOR, thickness: 2)
-                }
-              end
-              last_point = point
-            end
+            job_status_graph(:failed)
+            job_status_graph(:processed)
           end
         }
       }
+      
+      private
+      
+      def job_status_graph(job_status)
+        last_point = nil
+        presenter.report_points(job_status).each do |point|
+          if last_point
+            line(last_point.first, last_point.last, point.first, point.last) {
+              stroke(*GRAPH_DASHBOARD_COLORS[job_status], thickness: 2)
+            }
+          end
+          last_point = point
+        end
+      end
     end
   end
 end
