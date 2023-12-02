@@ -12,6 +12,7 @@ module Kuiq
       
       before_body do
         @presenter = Model::DashboardGraphPresenter.new(job_manager)
+        @points = {}
       end
 
       after_body do
@@ -49,6 +50,17 @@ module Kuiq
             grid_lines
             job_status_graph(:failed)
             job_status_graph(:processed)
+            selection_line
+          end
+          
+          on_mouse_moved do |event|
+            @selection_point = [event[:x], event[:y]]
+            body_root.queue_redraw_all
+          end
+          
+          on_mouse_exited do |outside|
+            @selection_point = nil
+            body_root.queue_redraw_all
           end
         }
       }
@@ -88,14 +100,43 @@ module Kuiq
       
       def job_status_graph(job_status)
         last_point = nil
-        points = presenter.report_points(job_status)
-        points.each do |point|
+        @points[job_status] = presenter.report_points(job_status)
+        @points[job_status].each do |point|
           if last_point
             line(last_point.first, last_point.last, point.first, point.last) {
-              stroke(*GRAPH_DASHBOARD_COLORS[job_status], thickness: 2)
+              stroke *GRAPH_DASHBOARD_COLORS[job_status], thickness: 2
             }
           end
           last_point = point
+        end
+      end
+      
+      def selection_line
+        require 'bigdecimal'
+        require 'perfect_shape/point'
+        if @selection_point
+          x = @selection_point.first
+          closest_processed_point = @points[:processed].min_by {|point| (point.first - x).abs }
+          closest_failed_point = @points[:failed][@points[:processed].index(closest_processed_point)] if closest_processed_point
+          closest_x = closest_processed_point&.first
+          closest_x_distance = PerfectShape::Point.point_distance(x.to_f, 0, closest_x.to_f, 0)
+          if closest_x_distance < GRAPH_POINT_DISTANCE
+            line(closest_x, GRAPH_PADDING_HEIGHT, closest_x, GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) {
+              stroke *GRAPH_DASHBOARD_COLORS[:selection_line], thickness: 2
+            }
+            circle(closest_failed_point.first, closest_failed_point.last, 4) {
+              fill *GRAPH_DASHBOARD_COLORS[:failed]
+            }
+            circle(closest_failed_point.first, closest_failed_point.last, 2) {
+              fill :white
+            }
+            circle(closest_processed_point.first, closest_processed_point.last, 4) {
+              fill *GRAPH_DASHBOARD_COLORS[:processed]
+            }
+            circle(closest_processed_point.first, closest_processed_point.last, 2) {
+              fill :white
+            }
+          end
         end
       end
     end
