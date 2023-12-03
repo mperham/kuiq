@@ -13,7 +13,7 @@ GEM
     glimmer (2.7.3)
       array_include_methods (~> 1.4.0)
       facets (>= 3.1.0, < 4.0.0)
-    glimmer-dsl-libui (0.11.5)
+    glimmer-dsl-libui (0.11.6)
       chunky_png (~> 1.4.0)
       color (~> 1.8)
       equalizer (= 0.0.11)
@@ -27,7 +27,7 @@ GEM
       rouge (>= 3.26.0, < 4.0.0)
       super_module (~> 1.4.1)
       text-table (>= 1.2.4, < 2.0.0)
-    json (2.6.3)
+    json (2.7.0)
     language_server-protocol (3.17.0.3)
     libui (0.1.2.pre)
     libui (0.1.2.pre-arm64-darwin)
@@ -114,7 +114,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
-  glimmer-dsl-libui (= 0.11.5)
+  glimmer-dsl-libui (= 0.11.6)
   minitest
   rake
   sidekiq

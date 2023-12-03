@@ -10,7 +10,7 @@ module Kuiq
       attr_reader :redis_url, :redis_info, :current_time
 
       def initialize
-        @polling_interval = 1
+        @polling_interval = POLLING_INTERVAL_DEFAULT
         @redis_url = Sidekiq.redis { |c| c.config.server_url }
         @redis_info = Sidekiq.default_configuration.redis_info
         @current_time = Time.now.utc
