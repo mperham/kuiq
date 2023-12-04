@@ -42,7 +42,7 @@ module Kuiq
         area {
           stretchy false
 
-          rectangle(0, 0, WINDOW_WIDTH, GRAPH_HEIGHT) {
+          rectangle(0, 0, WINDOW_WIDTH, GRAPH_HEIGHT + GRAPH_STATUS_HEIGHT) {
             fill 255, 255, 255
           }
 
@@ -50,11 +50,11 @@ module Kuiq
             grid_lines
             job_status_graph(:failed)
             job_status_graph(:processed)
-            selection_line
+            selection_stats
           end
           
           on_mouse_moved do |event|
-            @selection_point = [event[:x], event[:y]]
+            @selection_point = {x: event[:x], y: event[:y]}
             body_root.queue_redraw_all
           end
           
@@ -79,16 +79,26 @@ module Kuiq
           grid_marker_number_value = grid_marker_points.size - index
           grid_marker_number = grid_marker_number_value.to_s
           thick = index != grid_marker_points.size - 1
-          line(marker_point.first, marker_point.last, marker_point.first + 4, marker_point.last) {
-            stroke *GRAPH_DASHBOARD_COLORS[:marker], thickness: thick ? 2 : 1
-          }
-          if grid_marker_number_value % 2 == 1 && grid_marker_number_value != grid_marker_points.size
-            line(marker_point.first, marker_point.last, marker_point.first + GRAPH_WIDTH - GRAPH_PADDING_WIDTH, marker_point.last) {
+          mod_value = (2 * ((grid_marker_points.size / 30) + 1))
+          comparison_value = mod_value > 2 ? 0 : 1
+          if mod_value > 2
+            if grid_marker_number_value % mod_value == comparison_value
+              line(marker_point[:x], marker_point[:y], marker_point[:x] + 4, marker_point[:y]) {
+                stroke *GRAPH_DASHBOARD_COLORS[:marker], thickness: thick ? 2 : 1
+              }
+            end
+          else
+            line(marker_point[:x], marker_point[:y], marker_point[:x] + 4, marker_point[:y]) {
+              stroke *GRAPH_DASHBOARD_COLORS[:marker], thickness: thick ? 2 : 1
+            }
+          end
+          if grid_marker_number_value % mod_value == comparison_value && grid_marker_number_value != grid_marker_points.size
+            line(marker_point[:x], marker_point[:y], marker_point[:x] + GRAPH_WIDTH - GRAPH_PADDING_WIDTH, marker_point[:y]) {
               stroke *GRAPH_DASHBOARD_COLORS[:marker_dotted_line], thickness: 1, dashes: [1, 1]
             }
           end
-          if grid_marker_number_value % 2 == 1
-            text(marker_point.first + 4 + 3, marker_point.last - 6, 20) {
+          if grid_marker_number_value % mod_value == comparison_value
+            text(marker_point[:x] + 4 + 3, marker_point[:y] - 6, 20) {
               string(grid_marker_number) {
                 font family: 'Arial', size: 11
                 color GRAPH_DASHBOARD_COLORS[:marker_text]
@@ -103,7 +113,7 @@ module Kuiq
         @points[job_status] = presenter.report_points(job_status)
         @points[job_status].each do |point|
           if last_point
-            line(last_point.first, last_point.last, point.first, point.last) {
+            line(last_point[:x], last_point[:y], point[:x], point[:y]) {
               stroke *GRAPH_DASHBOARD_COLORS[job_status], thickness: 2
             }
           end
@@ -111,30 +121,58 @@ module Kuiq
         end
       end
       
-      def selection_line
+      def selection_stats
         require 'bigdecimal'
         require 'perfect_shape/point'
         if @selection_point
-          x = @selection_point.first
-          closest_processed_point = @points[:processed].min_by {|point| (point.first - x).abs }
+          x = @selection_point[:x]
+          closest_processed_point = @points[:processed].min_by {|point| (point[:x] - x).abs }
           closest_failed_point = @points[:failed][@points[:processed].index(closest_processed_point)] if closest_processed_point
-          closest_x = closest_processed_point&.first
+          closest_x = closest_processed_point&.[](:x)
           closest_x_distance = PerfectShape::Point.point_distance(x.to_f, 0, closest_x.to_f, 0)
           if closest_x_distance < GRAPH_POINT_DISTANCE
             line(closest_x, GRAPH_PADDING_HEIGHT, closest_x, GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) {
-              stroke *GRAPH_DASHBOARD_COLORS[:selection_line], thickness: 2
+              stroke *GRAPH_DASHBOARD_COLORS[:selection_stats], thickness: 2
             }
-            circle(closest_failed_point.first, closest_failed_point.last, 4) {
+            circle(closest_failed_point[:x], closest_failed_point[:y], 4) {
               fill *GRAPH_DASHBOARD_COLORS[:failed]
             }
-            circle(closest_failed_point.first, closest_failed_point.last, 2) {
+            circle(closest_failed_point[:x], closest_failed_point[:y], 2) {
               fill :white
             }
-            circle(closest_processed_point.first, closest_processed_point.last, 4) {
+            circle(closest_processed_point[:x], closest_processed_point[:y], 4) {
               fill *GRAPH_DASHBOARD_COLORS[:processed]
             }
-            circle(closest_processed_point.first, closest_processed_point.last, 2) {
+            circle(closest_processed_point[:x], closest_processed_point[:y], 2) {
               fill :white
+            }
+            text_label_x = (GRAPH_WIDTH/2.0)
+            text_label_y = GRAPH_HEIGHT + GRAPH_PADDING_HEIGHT
+            text_label_width = 220
+            font_height = 14
+            text(text_label_x, text_label_y, text_label_width) {
+              string(closest_processed_point[:time]) {
+                font family: 'Arial', size: font_height
+                color GRAPH_DASHBOARD_COLORS[:marker_text]
+              }
+            }
+            square(text_label_x + text_label_width, text_label_y + 2, font_height - 2) {
+              fill GRAPH_DASHBOARD_COLORS[:failed]
+            }
+            text(text_label_x + text_label_width + font_height + 2, text_label_y, text_label_width/3.0) {
+              string("Failed: #{closest_failed_point[:failed]}") {
+                font family: 'Arial', size: 14
+                color GRAPH_DASHBOARD_COLORS[:marker_text]
+              }
+            }
+            square(text_label_x + (4.0/3.0)*text_label_width + font_height + 2, text_label_y + 2, font_height - 2) {
+              fill GRAPH_DASHBOARD_COLORS[:processed]
+            }
+            text(text_label_x + (4.0/3.0)*text_label_width + 2*font_height + 4, text_label_y, text_label_width) {
+              string("Processed: #{closest_processed_point[:processed]}") {
+                font family: 'Arial', size: 14
+                color GRAPH_DASHBOARD_COLORS[:marker_text]
+              }
             }
           end
         end
