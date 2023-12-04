@@ -29,12 +29,12 @@ module Kuiq
         points = []
         return points if @stats.size <= 1
         graph_max = [job_status_max, 1].max
-        @stats.each_with_index do |job, n|
+        @stats.each_with_index do |stat, n|
           next if n == 0
-          job_status_diff_value = @stats[n-1][job_status] - job[job_status]
+          job_status_diff_value = @stats[n-1][job_status] - stat[job_status]
           x = GRAPH_WIDTH - ((n - 1) * GRAPH_POINT_DISTANCE) - GRAPH_PADDING_WIDTH
           y = ((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) - job_status_diff_value*((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT*2)/graph_max))
-          points << [x, y]
+          points << {x: x, y: y, time: stat[:time], job_status => job_status_diff_value}
         end
         translate_points(points)
         points
@@ -47,7 +47,7 @@ module Kuiq
         graph_max.times.map do |marker_index|
           x = GRAPH_PADDING_WIDTH
           y = GRAPH_PADDING_HEIGHT + marker_index * division_height
-          [x, y]
+          {x: x, y: y}
         end
       end
       
@@ -76,7 +76,7 @@ module Kuiq
       end
       
       def now
-        Time.now.utc.strftime("%H:%M:%S UTC")
+        Time.now.utc.strftime('%a %d %b %Y %T GMT')
       end
     end
   end
