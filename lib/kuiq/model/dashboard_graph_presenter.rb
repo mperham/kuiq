@@ -11,6 +11,7 @@ module Kuiq
       def initialize(job_manager)
         @job_manager = job_manager
         @stats = []
+        @one_week_stats = []
         @reset_stats_observer = Glimmer::DataBinding::Observer.proc {@stats = []}
         @reset_stats_observer.observe(@job_manager, :polling_interval)
       end
@@ -61,6 +62,44 @@ module Kuiq
           end
         end
         max
+      end
+      
+      def one_week_history
+        @one_week_history ||= Sidekiq::Stats::History.new(7)
+      end
+      
+      def one_week_report_points(job_status)
+        @one_week_stats = one_week_history.send(job_status)
+        points = []
+        return points if @one_week_stats.size <= 1
+        graph_max = [one_week_job_status_max, 1].max
+        @one_week_stats.each_with_index do |stat, n|
+          time = stat.first
+          value = stat.last
+          x = GRAPH_WIDTH - (n * one_week_graph_point_distance) - GRAPH_PADDING_WIDTH
+          y = ((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) - value*((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT*2)/graph_max))
+          points << {x: x, y: y, time: time, job_status => value}
+        end
+        points
+      end
+      
+      def one_week_grid_marker_points
+        graph_max = [one_week_job_status_max, 1].max
+        graph_height = (GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT*2)
+        division_height = graph_height / graph_max
+        graph_max.times.map do |marker_index|
+          x = GRAPH_PADDING_WIDTH
+          y = GRAPH_PADDING_HEIGHT + marker_index * division_height
+          {x: x, y: y}
+        end
+      end
+      
+      def one_week_job_status_max
+        JOB_STATUSES.map { |job_status| one_week_history.send(job_status).values }.reduce(:+).max
+      end
+      
+      def one_week_graph_point_distance
+        (GRAPH_WIDTH - 2.0*GRAPH_PADDING_WIDTH - 30) / (7-1).to_f
       end
       
       private

@@ -4,7 +4,7 @@ require "kuiq/version"
 
 module Kuiq
   WINDOW_WIDTH = 900.0
-  WINDOW_HEIGHT = 530.0
+  WINDOW_HEIGHT = 560.0
   GRAPH_WIDTH = 885.0
   GRAPH_HEIGHT = 200.0
   GRAPH_STATUS_HEIGHT = 30.0
