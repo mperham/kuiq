@@ -38,13 +38,15 @@ module Kuiq
                     }
                   }
 
-                  slider(1, 10) {
+                  slider(POLLING_INTERVAL_MIN, POLLING_INTERVAL_MAX) {
                     value <=> [job_manager, :polling_interval]
                   }
                 }
               }
 
-              dashboard_graph(job_manager: job_manager)
+              dashboard_graph(job_manager: job_manager) {
+                stretchy false
+              }
             }
           }
 
