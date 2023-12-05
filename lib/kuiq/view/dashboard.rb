@@ -44,7 +44,9 @@ module Kuiq
                 }
               }
 
-              dashboard_graph(job_manager: job_manager)
+              dashboard_graph(job_manager: job_manager) {
+                stretchy false
+              }
             }
           }
 
