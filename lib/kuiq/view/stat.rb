@@ -1,6 +1,6 @@
 module Kuiq
   module View
-    class GlobalStat
+    class Stat
       include Glimmer::LibUI::CustomControl
 
       ATTRIBUTE_CUSTOM_TEXT = {

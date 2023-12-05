@@ -1,10 +1,13 @@
 require "kuiq/model/job"
+require "kuiq/model/process"
+require "kuiq/model/work"
 require "kuiq/model/paginator"
 
 module Kuiq
   module Model
     class JobManager
       REDIS_PROPERTIES = %w[redis_version uptime_in_days connected_clients used_memory_human used_memory_peak_human]
+      BUSY_PROPERTIES = %i[process_size total_concurrency busy utilization total_rss]
 
       attr_accessor :polling_interval
       attr_reader :redis_url, :redis_info, :current_time
@@ -16,17 +19,17 @@ module Kuiq
         @current_time = Time.now.utc
       end
 
-      def stats
-        # do not cache in a variable to ensure getting the latest values when calling methods
-        # off of the Status object (e.g. when calling stats.processed)
-        Sidekiq::Stats.new
-      end
+      def stats = @stats ||= Sidekiq::Stats.new
+
+      def process_set = @process_set ||= Sidekiq::ProcessSet.new
+
+      def work_set = @work_set ||= Sidekiq::WorkSet.new
 
       def processed = stats.processed
 
       def failed = stats.failed
 
-      def busy = Sidekiq::WorkSet.new.size
+      def busy = work_set.size
 
       def enqueued = stats.enqueued
 
@@ -35,6 +38,26 @@ module Kuiq
       def scheduled = stats.scheduled_size
 
       def dead = stats.dead_size
+
+      def process_size = process_set.size
+
+      def total_concurrency = process_set.total_concurrency
+
+      def total_rss = process_set.total_rss
+
+      def utilization
+        x = total_concurrency
+        ws = busy
+        x.zero? ? 0 : ((ws / x.to_f) * 100).round(0)
+      end
+
+      def processes
+        process_set.to_a.map { |process_hash| Process.new(process_hash) }
+      end
+
+      def works
+        work_set.to_a.map { |*args| Work.new(*args) }
+      end
 
       def retried_jobs
         # Data will get lazy loaded into the table as the user scrolls through.
@@ -57,7 +80,7 @@ module Kuiq
         page_size = 25
         page_data_cache = nil
         Enumerator::Lazy.new(count.times, count) do |yielder, index|
-          page_index = index / page_size
+          page_index = (index / page_size)
           page = page_index + 1
           index_within_page = index % page_size
           count = 1
@@ -75,6 +98,13 @@ module Kuiq
         refresh_time
         refresh_stats
         refresh_redis_properties
+        refresh_busy_properties
+      end
+
+      def refresh_busy_properties
+        BUSY_PROPERTIES.each do |property|
+          notify_observers(property)
+        end
       end
 
       def refresh_time
@@ -83,6 +113,7 @@ module Kuiq
       end
 
       def refresh_stats
+        @process_set = @work_set = @stats = nil
         Job::STATUSES.each do |status|
           # notify_observers is added automatically by Glimmer when data-binding
           # it enables manually triggering data-binding changes when needed

@@ -20,7 +20,7 @@ module Kuiq
     marker: [204, 203, 203],
     marker_dotted_line: [217, 217, 217],
     marker_text: [96, 96, 96],
-    selection_stats: [133, 133, 133],
+    selection_stats: [133, 133, 133]
   }
   POLLING_INTERVAL_MIN = 1
   POLLING_INTERVAL_MAX = 20

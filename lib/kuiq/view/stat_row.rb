@@ -1,9 +1,8 @@
-require "kuiq/model/job"
-require "kuiq/view/global_stat"
+require "kuiq/view/stat"
 
 module Kuiq
   module View
-    class GlobalStats
+    class StatRow
       include Glimmer::LibUI::CustomControl
 
       option :group_title
@@ -16,7 +15,7 @@ module Kuiq
 
           horizontal_box {
             attributes.each do |attribute|
-              global_stat(model: model, attribute: attribute)
+              stat(model: model, attribute: attribute)
             end
           }
         }
