@@ -7,6 +7,7 @@ module Kuiq
   module Model
     class JobManager
       REDIS_PROPERTIES = %w[redis_version uptime_in_days connected_clients used_memory_human used_memory_peak_human]
+      BUSY_PROPERTIES = %i[process_size total_concurrency busy utilization total_rss]
 
       attr_accessor :polling_interval
       attr_reader :redis_url, :redis_info, :current_time
@@ -20,9 +21,9 @@ module Kuiq
 
       def stats = @stats ||= Sidekiq::Stats.new
 
-      def process_set = @process_set ||= Kuiq::Model::ProcessSet.new
+      def process_set = @process_set ||= Sidekiq::ProcessSet.new
 
-      def work_set = @work_set ||= Kuiq::Model::WorkSet.new
+      def work_set = @work_set ||= Sidekiq::WorkSet.new
 
       def processed = stats.processed
 
@@ -48,6 +49,14 @@ module Kuiq
         x = total_concurrency
         ws = busy
         x.zero? ? 0 : ((ws / x.to_f) * 100).round(0)
+      end
+
+      def processes
+        process_set.to_a.map { |process_hash| Process.new(process_hash) }
+      end
+
+      def works
+        work_set.to_a.map { |*args| Work.new(*args) }
       end
 
       def retried_jobs
@@ -89,6 +98,13 @@ module Kuiq
         refresh_time
         refresh_stats
         refresh_redis_properties
+        refresh_busy_properties
+      end
+
+      def refresh_busy_properties
+        BUSY_PROPERTIES.each do |property|
+          notify_observers(property)
+        end
       end
 
       def refresh_time

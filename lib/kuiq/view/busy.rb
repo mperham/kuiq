@@ -1,5 +1,4 @@
-require "kuiq/view/global_stats"
-require "kuiq/view/busy_stats"
+require "kuiq/view/stat_row"
 require "kuiq/view/footer"
 
 module Kuiq
@@ -11,14 +10,17 @@ module Kuiq
 
       body {
         vertical_box {
-          global_stats(group_title: t("Summary"), model: job_manager, attributes: Model::Job::STATUSES) {
+          stat_row(group_title: t("Summary"), model: job_manager, attributes: Model::Job::STATUSES) {
             stretchy false
           }
 
-          busy_stats(group_title: t("Status"), model: job_manager, attributes: %i[process_size total_concurrency busy utilization total_rss])
+          stat_row(group_title: t("Status"), model: job_manager, attributes: Model::JobManager::BUSY_PROPERTIES) {
+            stretchy false
+          }
 
           group(t("Processes")) {
             margined false
+
             table {
               text_column(t("Name"))
               text_column(t("Started"))
@@ -26,18 +28,20 @@ module Kuiq
               text_column(t("Threads"))
               text_column(t("Busy"))
 
-              cell_rows <= [job_manager, :process_set, column_attributes: {
-                t("Name") => :identity,
-                t("Started") => :started_at,
-                t("RSS") => :rss,
-                t("Threads") => :concurrency,
-                t("Busy") => :busy
-              }]
+              cell_rows <= [job_manager, :processes,
+                column_attributes: {
+                  t("Name") => :identity,
+                  t("Started") => :started_at,
+                  t("RSS") => :rss,
+                  t("Threads") => :concurrency,
+                  t("Busy") => :busy
+                }]
             }
           }
 
           group(t("Jobs")) {
             margined false
+
             table {
               text_column(t("Process"))
               text_column(t("TID"))
@@ -47,15 +51,16 @@ module Kuiq
               text_column(t("Arguments"))
               text_column(t("Started"))
 
-              cell_rows <= [job_manager, :work_set, column_attributes: {
-                t("Process") => :process,
-                t("TID") => :thread,
-                t("JID") => :jid,
-                t("Queue") => :queue,
-                t("Job") => :class,
-                t("Arguments") => :args,
-                t("Started") => :started_at
-              }]
+              cell_rows <= [job_manager, :works,
+                column_attributes: {
+                  t("Process") => :process,
+                  t("TID") => :thread,
+                  t("JID") => :jid,
+                  t("Queue") => :queue,
+                  t("Job") => :class,
+                  t("Arguments") => :args,
+                  t("Started") => :started_at
+                }]
             }
           }
 

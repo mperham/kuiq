@@ -1,4 +1,4 @@
-require "kuiq/view/global_stats"
+require "kuiq/view/stat_row"
 require "kuiq/view/footer"
 
 module Kuiq
@@ -10,7 +10,7 @@ module Kuiq
 
       body {
         vertical_box {
-          global_stats(group_title: t("Summary"), model: job_manager, attributes: Model::Job::STATUSES) {
+          stat_row(group_title: t("Summary"), model: job_manager, attributes: Model::Job::STATUSES) {
             stretchy false
           }
 
@@ -22,14 +22,15 @@ module Kuiq
             text_column(t("Arguments"))
             text_column(t("Error"))
 
-            cell_rows <= [job_manager, :retried_jobs, column_attributes: {
-              t("NextRetry") => :next_retry,
-              t("RetryCount") => :retry_count,
-              t("Queue") => :queue,
-              t("Job") => :job,
-              t("Arguments") => :arguments,
-              t("Error") => :error
-            }]
+            cell_rows <= [job_manager, :retried_jobs,
+              column_attributes: {
+                t("NextRetry") => :next_retry,
+                t("RetryCount") => :retry_count,
+                t("Queue") => :queue,
+                t("Job") => :job,
+                t("Arguments") => :arguments,
+                t("Error") => :error
+              }]
           }
 
           horizontal_separator {
