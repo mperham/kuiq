@@ -28,7 +28,7 @@ module Kuiq
 
                 vertical_box {
                   horizontal_box {
-                    label(t("PollingInterval")) {
+                    label("#{t("PollingInterval")}:") {
                       stretchy false
                     }
 
