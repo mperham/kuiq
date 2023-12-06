@@ -13,7 +13,8 @@ module Kuiq
       before_body do
         @presenter = Model::DashboardGraphPresenter.new(job_manager)
         @points = {}
-        @one_week_points = {}
+        @multi_day_points = {}
+        @multi_day_selection_point = {}
       end
 
       after_body do
@@ -65,30 +66,111 @@ module Kuiq
               end
             }
           }
-          tab_item(t("OneWeek")) {
-            @one_week_graph = area {
+          
+          tab_item(t('OneWeek')) {
+            day_count = 7
+            area { |graph_area|
               rectangle(0, 0, WINDOW_WIDTH, GRAPH_HEIGHT + GRAPH_STATUS_HEIGHT) {
                 fill 255, 255, 255
               }
 
               on_draw do
-                one_week_grid_lines
-                one_week_job_status_graph(:failed)
-                one_week_job_status_graph(:processed)
-                one_week_selection_stats
+                multi_day_grid_lines(day_count)
+                multi_day_job_status_graph(day_count, :failed)
+                multi_day_job_status_graph(day_count, :processed)
+                multi_day_selection_stats(day_count)
               end
 
               on_mouse_moved do |event|
-                @one_week_selection_point = {x: event[:x], y: event[:y]}
-                @one_week_graph.queue_redraw_all
+                @multi_day_selection_point[day_count] = {x: event[:x], y: event[:y]}
+                graph_area.queue_redraw_all
               end
 
               on_mouse_exited do |outside|
-                @one_week_point = nil
-                @one_week_graph.queue_redraw_all
+                @multi_day_selection_point[day_count] = nil
+                graph_area.queue_redraw_all
               end
             }
           }
+          
+          tab_item(t('OneMonth')) {
+            day_count = 30
+            area { |graph_area|
+              rectangle(0, 0, WINDOW_WIDTH, GRAPH_HEIGHT + GRAPH_STATUS_HEIGHT) {
+                fill 255, 255, 255
+              }
+    
+              on_draw do
+                multi_day_grid_lines(day_count)
+                multi_day_job_status_graph(day_count, :failed)
+                multi_day_job_status_graph(day_count, :processed)
+                multi_day_selection_stats(day_count)
+              end
+              
+              on_mouse_moved do |event|
+                @multi_day_selection_point[day_count] = {x: event[:x], y: event[:y]}
+                graph_area.queue_redraw_all
+              end
+              
+              on_mouse_exited do |outside|
+                @multi_day_selection_point[day_count] = nil
+                graph_area.queue_redraw_all
+              end
+            }
+          }
+          
+          tab_item(t('ThreeMonths')) {
+            day_count = 90
+            area { |graph_area|
+              rectangle(0, 0, WINDOW_WIDTH, GRAPH_HEIGHT + GRAPH_STATUS_HEIGHT) {
+                fill 255, 255, 255
+              }
+    
+              on_draw do
+                multi_day_grid_lines(day_count)
+                multi_day_job_status_graph(day_count, :failed)
+                multi_day_job_status_graph(day_count, :processed)
+                multi_day_selection_stats(day_count)
+              end
+              
+              on_mouse_moved do |event|
+                @multi_day_selection_point[day_count] = {x: event[:x], y: event[:y]}
+                graph_area.queue_redraw_all
+              end
+              
+              on_mouse_exited do |outside|
+                @multi_day_selection_point[day_count] = nil
+                graph_area.queue_redraw_all
+              end
+            }
+          }
+          
+          tab_item(t('SixMonths')) {
+            day_count = 180
+            area { |graph_area|
+              rectangle(0, 0, WINDOW_WIDTH, GRAPH_HEIGHT + GRAPH_STATUS_HEIGHT) {
+                fill 255, 255, 255
+              }
+    
+              on_draw do
+                multi_day_grid_lines(day_count)
+                multi_day_job_status_graph(day_count, :failed)
+                multi_day_job_status_graph(day_count, :processed)
+                multi_day_selection_stats(day_count)
+              end
+              
+              on_mouse_moved do |event|
+                @multi_day_selection_point[day_count] = {x: event[:x], y: event[:y]}
+                graph_area.queue_redraw_all
+              end
+              
+              on_mouse_exited do |outside|
+                @multi_day_selection_point[day_count] = nil
+                graph_area.queue_redraw_all
+              end
+            }
+          }
+          
         }
       }
 
@@ -204,15 +286,15 @@ module Kuiq
           end
         end
       end
-
-      def one_week_grid_lines
+      
+      def multi_day_grid_lines(day_count)
         line(GRAPH_PADDING_WIDTH, GRAPH_PADDING_HEIGHT, GRAPH_PADDING_WIDTH, GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) {
           stroke GRAPH_DASHBOARD_COLORS[:grid]
         }
         line(GRAPH_PADDING_WIDTH, GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT, GRAPH_WIDTH - GRAPH_PADDING_WIDTH, GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) {
           stroke GRAPH_DASHBOARD_COLORS[:grid]
         }
-        grid_marker_points = presenter.one_week_grid_marker_points
+        grid_marker_points = presenter.multi_day_grid_marker_points(day_count)
         grid_marker_points.each_with_index do |marker_point, index|
           grid_marker_number_value = (grid_marker_points.size - index).to_i
           grid_marker_number = (grid_marker_number_value >= 1000) ? "#{grid_marker_number_value / 1000}K" : grid_marker_number.to_s
@@ -245,11 +327,12 @@ module Kuiq
           end
         end
       end
-
-      def one_week_job_status_graph(job_status)
+      
+      def multi_day_job_status_graph(day_count, job_status)
         last_point = nil
-        @one_week_points[job_status] = presenter.one_week_report_points(job_status)
-        @one_week_points[job_status].each do |point|
+        @multi_day_points[day_count] ||= {}
+        @multi_day_points[day_count][job_status] = presenter.multi_day_report_points(day_count, job_status)
+        @multi_day_points[day_count][job_status].each do |point|
           if last_point
             line(last_point[:x], last_point[:y], point[:x], point[:y]) {
               stroke(*GRAPH_DASHBOARD_COLORS[job_status], thickness: 2)
@@ -258,17 +341,17 @@ module Kuiq
           last_point = point
         end
       end
-
-      def one_week_selection_stats
-        require "bigdecimal"
-        require "perfect_shape/point"
-        if @one_week_selection_point
-          x = @one_week_selection_point[:x]
-          closest_processed_point = @one_week_points[:processed].min_by { |point| (point[:x] - x).abs }
-          closest_failed_point = @one_week_points[:failed][@one_week_points[:processed].index(closest_processed_point)] if closest_processed_point
+      
+      def multi_day_selection_stats(day_count)
+        require 'bigdecimal'
+        require 'perfect_shape/point'
+        if @multi_day_selection_point[day_count]
+          x = @multi_day_selection_point[day_count][:x]
+          closest_processed_point = @multi_day_points[day_count][:processed].min_by {|point| (point[:x] - x).abs }
+          closest_failed_point = @multi_day_points[day_count][:failed][@multi_day_points[day_count][:processed].index(closest_processed_point)] if closest_processed_point
           closest_x = closest_processed_point&.[](:x)
           closest_x_distance = PerfectShape::Point.point_distance(x.to_f, 0, closest_x.to_f, 0)
-          if closest_x_distance < presenter.one_week_graph_point_distance
+          if closest_x_distance < presenter.multi_day_graph_point_distance(day_count)
             line(closest_x, GRAPH_PADDING_HEIGHT, closest_x, GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) {
               stroke(*GRAPH_DASHBOARD_COLORS[:selection_stats], thickness: 2)
             }
@@ -286,7 +369,7 @@ module Kuiq
             }
             text_label_x = (GRAPH_WIDTH / 2.0)
             text_label_y = GRAPH_HEIGHT + GRAPH_PADDING_HEIGHT
-            text_label_width = 120
+            text_label_width = 130
             font_height = 14
             text(text_label_x, text_label_y, text_label_width) {
               string(closest_processed_point[:time]) {

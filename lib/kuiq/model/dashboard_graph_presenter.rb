@@ -11,7 +11,7 @@ module Kuiq
       def initialize(job_manager)
         @job_manager = job_manager
         @stats = []
-        @one_week_stats = []
+        @multi_day_stats = []
         @reset_stats_observer = Glimmer::DataBinding::Observer.proc { @stats = [] }
         @reset_stats_observer.observe(@job_manager, :polling_interval)
       end
@@ -63,29 +63,29 @@ module Kuiq
         end
         max
       end
-
-      def one_week_history
-        @one_week_history ||= Sidekiq::Stats::History.new(7)
+      
+      def multi_day_history(day_count)
+        Sidekiq::Stats::History.new(day_count)
       end
-
-      def one_week_report_points(job_status)
-        @one_week_stats = one_week_history.send(job_status)
+      
+      def multi_day_report_points(day_count, job_status)
+        @multi_day_stats = multi_day_history(day_count).send(job_status)
         points = []
-        return points if @one_week_stats.size <= 1
-        graph_max = [one_week_job_status_max, 1].max
-        @one_week_stats.each_with_index do |stat, n|
+        return points if @multi_day_stats.size <= 1
+        graph_max = [multi_day_job_status_max(day_count), 1].max
+        @multi_day_stats.each_with_index do |stat, n|
           time = stat.first
           value = stat.last
-          x = GRAPH_WIDTH - (n * one_week_graph_point_distance) - GRAPH_PADDING_WIDTH
-          y = ((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) - value * ((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT * 2) / graph_max))
-          points << {:x => x, :y => y, :time => time, job_status => value}
+          x = GRAPH_WIDTH - (n * multi_day_graph_point_distance(day_count)) - GRAPH_PADDING_WIDTH
+          y = ((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) - value*((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT*2)/graph_max))
+          points << {x: x, y: y, time: time, job_status => value}
         end
         points
       end
-
-      def one_week_grid_marker_points
-        graph_max = [one_week_job_status_max, 1].max
-        graph_height = (GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT * 2)
+      
+      def multi_day_grid_marker_points(day_count)
+        graph_max = [multi_day_job_status_max(day_count), 1].max
+        graph_height = (GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT*2)
         division_height = graph_height / graph_max
         graph_max.times.map do |marker_index|
           x = GRAPH_PADDING_WIDTH
@@ -93,13 +93,14 @@ module Kuiq
           {x: x, y: y}
         end
       end
-
-      def one_week_job_status_max
-        JOB_STATUSES.map { |job_status| one_week_history.send(job_status).values }.reduce(:+).max
+      
+      def multi_day_job_status_max(day_count)
+        history = multi_day_history(day_count)
+        JOB_STATUSES.map { |job_status| history.send(job_status).values }.reduce(:+).max
       end
-
-      def one_week_graph_point_distance
-        (GRAPH_WIDTH - 2.0 * GRAPH_PADDING_WIDTH - 30) / (7 - 1).to_f
+      
+      def multi_day_graph_point_distance(day_count)
+        (GRAPH_WIDTH - 2.0*GRAPH_PADDING_WIDTH - 30) / (day_count-1).to_f
       end
 
       private
