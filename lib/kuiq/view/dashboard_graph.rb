@@ -11,7 +11,7 @@ module Kuiq
       attr_reader :presenter
 
       before_body do
-        @presenter = Model::DashboardGraphPresenter.new(job_manager)
+        @presenter = Model::DashboardGraphPresenter.new(job_manager, graph_width)
         @points = {}
         @multi_day_points = {}
         @multi_day_selection_point = {}
@@ -44,11 +44,9 @@ module Kuiq
         tab {
           tab_item(t("LivePoll")) {
             @live_graph = area {
-              rectangle(0, 0, WINDOW_WIDTH, GRAPH_HEIGHT + GRAPH_STATUS_HEIGHT) {
-                fill 255, 255, 255
-              }
-
               on_draw do
+                @presenter.graph_width = graph_width
+                graph_background
                 grid_lines
                 job_status_graph(:failed)
                 job_status_graph(:processed)
@@ -88,11 +86,22 @@ module Kuiq
 
       private
       
+      def graph_background
+        rectangle(0, 0, graph_width, GRAPH_HEIGHT + GRAPH_STATUS_HEIGHT) {
+          fill 255, 255, 255
+        }
+      end
+      
+      def graph_width
+        current_window_width = body_root&.window_proxy&.content_size&.first || WINDOW_WIDTH
+        current_window_width - 15
+      end
+      
       def grid_lines
         line(GRAPH_PADDING_WIDTH, GRAPH_PADDING_HEIGHT, GRAPH_PADDING_WIDTH, GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) {
           stroke GRAPH_DASHBOARD_COLORS[:grid]
         }
-        line(GRAPH_PADDING_WIDTH, GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT, GRAPH_WIDTH - GRAPH_PADDING_WIDTH, GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) {
+        line(GRAPH_PADDING_WIDTH, GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT, graph_width - GRAPH_PADDING_WIDTH, GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) {
           stroke GRAPH_DASHBOARD_COLORS[:grid]
         }
         grid_marker_points = presenter.grid_marker_points
@@ -114,7 +123,7 @@ module Kuiq
             }
           end
           if grid_marker_number_value % mod_value == comparison_value && grid_marker_number_value != grid_marker_points.size
-            line(marker_point[:x], marker_point[:y], marker_point[:x] + GRAPH_WIDTH - GRAPH_PADDING_WIDTH, marker_point[:y]) {
+            line(marker_point[:x], marker_point[:y], marker_point[:x] + graph_width - GRAPH_PADDING_WIDTH, marker_point[:y]) {
               stroke *GRAPH_DASHBOARD_COLORS[:marker_dotted_line], thickness: 1, dashes: [1, 1]
             }
           end
@@ -167,7 +176,7 @@ module Kuiq
             circle(closest_processed_point[:x], closest_processed_point[:y], 2) {
               fill :white
             }
-            text_label_x = (GRAPH_WIDTH / 2.0)
+            text_label_x = (graph_width / 2.0)
             text_label_y = GRAPH_HEIGHT + GRAPH_PADDING_HEIGHT
             text_label_width = 220
             font_height = 14
@@ -201,10 +210,6 @@ module Kuiq
       
       def multi_day_graph_area(day_count: 30)
         area { |graph_area|
-          rectangle(0, 0, WINDOW_WIDTH, GRAPH_HEIGHT + GRAPH_STATUS_HEIGHT) {
-            fill 255, 255, 255
-          }
-
           on_draw do
             multi_day_graph(day_count)
           end
@@ -222,6 +227,8 @@ module Kuiq
       end
       
       def multi_day_graph(day_count)
+        @presenter.graph_width = graph_width
+        graph_background
         multi_day_grid_lines(day_count)
         multi_day_job_status_graph(day_count, :failed)
         multi_day_job_status_graph(day_count, :processed)
@@ -233,7 +240,7 @@ module Kuiq
         line(GRAPH_PADDING_WIDTH, GRAPH_PADDING_HEIGHT, GRAPH_PADDING_WIDTH, GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) {
           stroke GRAPH_DASHBOARD_COLORS[:grid]
         }
-        line(GRAPH_PADDING_WIDTH, GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT, GRAPH_WIDTH - GRAPH_PADDING_WIDTH, GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) {
+        line(GRAPH_PADDING_WIDTH, GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT, graph_width - GRAPH_PADDING_WIDTH, GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) {
           stroke GRAPH_DASHBOARD_COLORS[:grid]
         }
         grid_marker_points = presenter.multi_day_grid_marker_points(day_count)
@@ -255,7 +262,7 @@ module Kuiq
             }
           end
           if grid_marker_number_value % mod_value == comparison_value && grid_marker_number_value != grid_marker_points.size
-            line(marker_point[:x], marker_point[:y], marker_point[:x] + GRAPH_WIDTH - GRAPH_PADDING_WIDTH, marker_point[:y]) {
+            line(marker_point[:x], marker_point[:y], marker_point[:x] + graph_width - GRAPH_PADDING_WIDTH, marker_point[:y]) {
               stroke *GRAPH_DASHBOARD_COLORS[:marker_dotted_line], thickness: 1, dashes: [1, 1]
             }
           end
@@ -309,7 +316,7 @@ module Kuiq
             circle(closest_processed_point[:x], closest_processed_point[:y], 2) {
               fill :white
             }
-            text_label_x = (GRAPH_WIDTH / 2.0)
+            text_label_x = (graph_width / 2.0)
             text_label_y = GRAPH_HEIGHT + GRAPH_PADDING_HEIGHT
             text_label_width = 130
             font_height = 14
