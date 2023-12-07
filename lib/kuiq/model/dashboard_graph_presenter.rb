@@ -9,11 +9,12 @@ module Kuiq
       JOB_STATUSES = [:processed, :failed]
 
       attr_reader :job_manager
-      attr_accessor :graph_width
+      attr_accessor :graph_width, :graph_height
 
-      def initialize(job_manager, graph_width)
+      def initialize(job_manager, graph_width, graph_height)
         @job_manager = job_manager
-        @graph_width
+        @graph_width = graph_width
+        @graph_height = graph_height
         @stats = []
         @multi_day_stats = []
         @reset_stats_observer = Glimmer::DataBinding::Observer.proc { @stats = [] }
@@ -47,7 +48,7 @@ module Kuiq
           next if n == 0
           job_status_diff_value = current_stats[n - 1][job_status] - stat[job_status]
           x = graph_width - ((n - 1) * GRAPH_POINT_DISTANCE) - GRAPH_PADDING_WIDTH
-          y = ((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) - job_status_diff_value * ((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT * 2) / graph_max))
+          y = ((graph_height - GRAPH_PADDING_HEIGHT) - job_status_diff_value * ((graph_height - GRAPH_PADDING_HEIGHT * 2) / graph_max))
           points << {x: x, y: y, time: stat[:time], job_status => job_status_diff_value}
         end
         translate_points(points)
@@ -56,8 +57,8 @@ module Kuiq
 
       def grid_marker_points
         graph_max = [job_status_max, 1].max
-        graph_height = (GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT * 2)
-        division_height = graph_height / graph_max
+        current_graph_height = (graph_height - GRAPH_PADDING_HEIGHT * 2)
+        division_height = current_graph_height / graph_max
         graph_max.times.map do |marker_index|
           x = GRAPH_PADDING_WIDTH
           y = GRAPH_PADDING_HEIGHT + marker_index * division_height
@@ -91,7 +92,7 @@ module Kuiq
           time = stat.first
           value = stat.last
           x = graph_width - (n * multi_day_graph_point_distance(day_count)) - GRAPH_PADDING_WIDTH
-          y = ((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) - value*((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT*2)/graph_max))
+          y = ((graph_height - GRAPH_PADDING_HEIGHT) - value*((graph_height - GRAPH_PADDING_HEIGHT*2)/graph_max))
           raw_time = DateTime.strptime(time, '%Y-%m-%d').to_time
           points << {x: x, y: y, time: time, raw_time: raw_time, job_status => value}
         end
@@ -100,8 +101,8 @@ module Kuiq
       
       def multi_day_grid_marker_points(day_count)
         graph_max = [multi_day_job_status_max(day_count), 1].max
-        graph_height = (GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT*2)
-        division_height = graph_height / graph_max
+        current_graph_height = (graph_height - GRAPH_PADDING_HEIGHT*2)
+        division_height = current_graph_height / graph_max
         graph_max.times.map do |marker_index|
           x = GRAPH_PADDING_WIDTH
           y = GRAPH_PADDING_HEIGHT + marker_index * division_height
