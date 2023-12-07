@@ -1,3 +1,5 @@
+require "date"
+
 require "kuiq/model/job_manager"
 require "kuiq/model/job"
 
@@ -17,8 +19,10 @@ module Kuiq
       end
 
       def record_stats
+        raw_time = Time.now.utc
         stat = {
-          time: now,
+          time: live_poll_time_format(raw_time),
+          raw_time: raw_time,
           processed: job_manager.processed,
           failed: job_manager.failed
         }
@@ -35,7 +39,7 @@ module Kuiq
           job_status_diff_value = @stats[n - 1][job_status] - stat[job_status]
           x = GRAPH_WIDTH - ((n - 1) * GRAPH_POINT_DISTANCE) - GRAPH_PADDING_WIDTH
           y = ((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) - job_status_diff_value * ((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT * 2) / graph_max))
-          points << {:x => x, :y => y, :time => stat[:time], job_status => job_status_diff_value}
+          points << {x: x, y: y, time: stat[:time], job_status => job_status_diff_value}
         end
         translate_points(points)
         points
@@ -78,7 +82,8 @@ module Kuiq
           value = stat.last
           x = GRAPH_WIDTH - (n * multi_day_graph_point_distance(day_count)) - GRAPH_PADDING_WIDTH
           y = ((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT) - value*((GRAPH_HEIGHT - GRAPH_PADDING_HEIGHT*2)/graph_max))
-          points << {x: x, y: y, time: time, job_status => value}
+          raw_time = DateTime.strptime(time, '%Y-%m-%d').to_time
+          points << {x: x, y: y, time: time, raw_time: raw_time, job_status => value}
         end
         points
       end
@@ -115,8 +120,8 @@ module Kuiq
         end
       end
 
-      def now
-        Time.now.utc.strftime("%a %d %b %Y %T GMT")
+      def live_poll_time_format(time)
+        time.strftime("%a %d %b %Y %T GMT")
       end
     end
   end
