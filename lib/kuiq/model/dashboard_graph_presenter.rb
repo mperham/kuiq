@@ -6,7 +6,7 @@ require "kuiq/model/job"
 module Kuiq
   module Model
     class DashboardGraphPresenter
-      JOB_STATUSES = [:processed, :failed]
+      JOB_STATUSES = [:failed, :processed]
 
       attr_reader :job_manager
       attr_accessor :graph_width, :graph_height
@@ -39,6 +39,7 @@ module Kuiq
       
       def graph_max_points = (graph_width / GRAPH_POINT_DISTANCE).to_i + 1
       
+      # TODO Extract this logic to line_graph custom control
       def report_points(job_status)
         points = []
         current_stats = visible_stats
@@ -55,6 +56,7 @@ module Kuiq
         points
       end
 
+      # TODO Extract this logic to line_graph custom control
       def grid_marker_points
         graph_max = [job_status_max, 1].max
         current_graph_height = (graph_height - GRAPH_PADDING_HEIGHT * 2)
@@ -66,6 +68,7 @@ module Kuiq
         end
       end
 
+      # TODO Extract this logic to line_graph custom control
       def job_status_max
         max = 0
         current_stats = visible_stats
