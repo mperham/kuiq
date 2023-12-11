@@ -3,6 +3,7 @@ require "kuiq/model/process"
 require "kuiq/model/work"
 require "kuiq/model/paginator"
 require "kuiq/model/queue"
+require "kuiq/model/class_metric"
 
 module Kuiq
   module Model
@@ -62,6 +63,12 @@ module Kuiq
 
       def queues
         Sidekiq::Queue.all.map { |q| Kuiq::Model::Queue.new(q) }
+      end
+
+      def metrics
+        q = Sidekiq::Metrics::Query.new
+        @query_result = q.top_jobs(minutes: 60)
+        @query_result.job_results.sort_by { |(kls, jr)| -jr.totals["s"] }.take(30).map { |(kls, jr)| Kuiq::Model::ClassMetric.new(kls, jr) }
       end
 
       def retried_jobs

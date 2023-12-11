@@ -8,6 +8,7 @@ require "kuiq/view/retries"
 require "kuiq/view/scheduled"
 require "kuiq/view/morgue"
 require "kuiq/view/queues"
+require "kuiq/view/metrics"
 
 module Kuiq
   class GUI
@@ -41,6 +42,7 @@ module Kuiq
               morgue(job_manager: @job_manager)
             }
             tab_item("Metrics") {
+              metrics(job_manager: @job_manager)
             }
           }
         }
