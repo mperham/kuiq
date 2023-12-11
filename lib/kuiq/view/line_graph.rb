@@ -1,5 +1,7 @@
 module Kuiq
   module View
+    # General-Purpose Line Graph Custom Control
+    # TODO extract into a Ruby gem once implementation has been completed
     class LineGraph
       include Glimmer::LibUI::CustomControl
       
@@ -43,14 +45,13 @@ module Kuiq
       option :graph_status_height, default: DEFAULT_GRAPH_STATUS_HEIGHT
       
       # Attribute key like :date_string, which is expected to be present on every point inside its attribute hash that has x,y coordinates
-      # When display_attribute_on_hover is not nil, this enables user to hover over graph with mouse, and vertical line is rendered on top of closest graph point,
-      # displaying the that point's value for `display_attribute_on_hover` along with its attribute values.
-      option :display_attribute_on_hover, default: nil
+      # When display_attributes_on_hover is not nil, this enables user to hover over graph with mouse, and vertical line is rendered on top of closest graph point,
+      # displaying the that point's value for `display_attributes_on_hover` along with its attribute values.
+      # Format: [x_related_attribute_to_display, y_related_attribute1_label => y_related_attribute1, y_related_attribute2_label => y_related_attribute2, ...]
+      option :display_attributes_on_hover, default: nil
       
       after_body do
-        Glimmer::DataBinding::Observer.proc do
-          body_root.queue_redraw_all
-        end.observe(self, :lines)
+        observe(self, :lines) { body_root.queue_redraw_all }
       end
   
       body {
@@ -59,6 +60,7 @@ module Kuiq
             graph_background
             grid_lines
             all_line_graphs
+            # TODO shrink graph height if display_attributes_on_hover is nil and hover_stats won't get rendered
             hover_stats
           end
 
@@ -116,9 +118,11 @@ module Kuiq
             }
           end
           if grid_marker_number_value % mod_value == comparison_value
-            text(marker_point[:x] + 4 + 3, marker_point[:y] - 6, 20) {
+            grid_marker_number_font = graph_font_marker_text.merge(size: 11)
+            grid_marker_number_width = estimate_width_of_text(grid_marker_number, grid_marker_number_font)
+            text(marker_point[:x] + 4 + 3, marker_point[:y] - 6, grid_marker_number_width) {
               string(grid_marker_number) {
-                font family: "Arial", size: 11
+                font grid_marker_number_font
                 color graph_color_marker_text
               }
             }
@@ -153,6 +157,7 @@ module Kuiq
       def hover_stats
         require "bigdecimal"
         require "perfect_shape/point"
+        
         if @hover_point
           x = @hover_point[:x]
           # TODO make this dynamically display labels for every line (not expecting 2 lines exactly)
@@ -176,30 +181,44 @@ module Kuiq
             circle(closest_processed_point[:x], closest_processed_point[:y], 2) {
               fill :white
             }
-            text_label_x = (width / 2.0)
+            text_label = closest_processed_point[:time]
+            text_label_width = estimate_width_of_text(text_label, DEFAULT_GRAPH_FONT_MARKER_TEXT)
+            failed_text = "#{t("Failed")}: #{closest_failed_point[:failed]}"
+            failed_text_width = estimate_width_of_text(failed_text, graph_font_marker_text)
+            processed_text = "#{t("Processed")}: #{closest_processed_point[:processed]}"
+            processed_text_width = estimate_width_of_text(processed_text, graph_font_marker_text)
+            square_size = 12.0
+            square_to_label_padding = 10.0
+            label_padding = 10.0
+            text_label_x = width - (
+              text_label_width + label_padding +
+              square_size + square_to_label_padding + failed_text_width + label_padding +
+              square_size + square_to_label_padding + processed_text_width - graph_padding_width)
             text_label_y = height + graph_padding_height
-            text_label_width = 220 # TODO calculate dynamically in the future
-            font_height = DEFAULT_GRAPH_FONT_MARKER_TEXT[:size]
             text(text_label_x, text_label_y, text_label_width) {
-              string(closest_processed_point[:time]) {
+              string(text_label) {
                 font DEFAULT_GRAPH_FONT_MARKER_TEXT
                 color graph_color_marker_text
               }
             }
-            square(text_label_x + text_label_width, text_label_y + 2, font_height - 2) {
+            failed_square_x = text_label_x + text_label_width + label_padding
+            square(failed_square_x, text_label_y + 2, square_size) {
               fill lines[0][:stroke]
             }
-            text(text_label_x + text_label_width + font_height + 2, text_label_y, text_label_width / 3.0) {
-              string("#{t("Failed")}: #{closest_failed_point[:failed]}") {
+            failed_label_x = failed_square_x + square_size + square_to_label_padding
+            text(failed_label_x, text_label_y, failed_text_width) {
+              string(failed_text) {
                 font graph_font_marker_text
                 color graph_color_marker_text
               }
             }
-            square(text_label_x + (4.0 / 3.0) * text_label_width + font_height + 2, text_label_y + 2, font_height - 2) {
+            processed_square_x = failed_label_x + failed_text_width + label_padding
+            square(processed_square_x, text_label_y + 2, square_size) {
               fill lines[1][:stroke]
             }
-            text(text_label_x + (4.0 / 3.0) * text_label_width + 2 * font_height + 4, text_label_y, text_label_width) {
-              string("#{t("Processed")}: #{closest_processed_point[:processed]}") {
+            processed_label_x = processed_square_x + square_size + square_to_label_padding
+            text(processed_label_x, text_label_y, processed_text_width) {
+              string(processed_text) {
                 font graph_font_marker_text
                 color graph_color_marker_text
               }
@@ -207,6 +226,13 @@ module Kuiq
           end
         end
       end
+      
+      def estimate_width_of_text(text_string, font_properties)
+        font_size = font_properties[:size] || 16
+        estimated_font_width = 0.6 * font_size
+        text_string.chars.size * estimated_font_width
+      end
+      
     end
   end
 end
