@@ -7,6 +7,7 @@ require "kuiq/view/busy"
 require "kuiq/view/retries"
 require "kuiq/view/scheduled"
 require "kuiq/view/morgue"
+require "kuiq/view/queues"
 
 module Kuiq
   class GUI
@@ -27,8 +28,9 @@ module Kuiq
             tab_item("Busy") {
               busy(job_manager: @job_manager)
             }
-            #           tab_item("Queues") {
-            #           }
+            tab_item("Queues") {
+              queues(job_manager: @job_manager)
+            }
             tab_item(t("Retries")) {
               retries(job_manager: @job_manager)
             }
@@ -38,8 +40,8 @@ module Kuiq
             tab_item(t("Dead")) {
               morgue(job_manager: @job_manager)
             }
-            #           tab_item("Metrics") {
-            #           }
+            tab_item("Metrics") {
+            }
           }
         }
       }

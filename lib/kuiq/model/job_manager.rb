@@ -2,6 +2,7 @@ require "kuiq/model/job"
 require "kuiq/model/process"
 require "kuiq/model/work"
 require "kuiq/model/paginator"
+require "kuiq/model/queue"
 
 module Kuiq
   module Model
@@ -57,6 +58,10 @@ module Kuiq
 
       def works
         work_set.to_a.map { |*args| Work.new(*args) }
+      end
+
+      def queues
+        Sidekiq::Queue.all.map { |q| Kuiq::Model::Queue.new(q) }
       end
 
       def retried_jobs
