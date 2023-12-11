@@ -1,4 +1,3 @@
-require "chronic_duration"
 require "json"
 
 module Kuiq
