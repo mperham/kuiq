@@ -66,9 +66,9 @@ module Kuiq
       end
 
       def metrics
-        q = Sidekiq::Metrics::Query.new
-        @query_result = q.top_jobs(minutes: 60)
-        @query_result.job_results.sort_by { |(kls, jr)| -jr.totals["s"] }.take(30).map { |(kls, jr)| Kuiq::Model::ClassMetric.new(kls, jr) }
+        query = Sidekiq::Metrics::Query.new
+        query_result = query.top_jobs(minutes: 60)
+        query_result.job_results.sort_by { |(kls, jr)| -jr.totals["s"] }.take(30).map { |(kls, jr)| Kuiq::Model::ClassMetric.new(kls, jr) }
       end
 
       def retried_jobs
