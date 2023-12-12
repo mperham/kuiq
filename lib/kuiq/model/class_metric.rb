@@ -1,6 +1,11 @@
 module Kuiq
   module Model
     class ClassMetric
+      SWATCHES = [
+        "#537bc4", "#4dc9f6", "#f67019", "#f53794", "#acc236",
+        "#166a8f", "#00a950", "#58595b", "#8549ba", "#991b1b"
+      ]
+
       attr_reader :name, :results
       def initialize(klass, results)
         @name = klass
@@ -14,6 +19,17 @@ module Kuiq
       def tet = rounded_number(results.dig("totals", "s"), precision: 2)
 
       def aet = rounded_number(results.total_avg("s"), precision: 2)
+
+      def swatch_background
+        SWATCHES.sample
+      end
+
+      def swatch
+      end
+
+      def swatch=(value)
+        value
+      end
 
       private
 

@@ -18,6 +18,9 @@ module Kuiq
             margined false
 
             table {
+              checkbox_column("Swatch") {
+                editable true
+              }
               text_column(t("Name"))
               text_column(t("Success"))
               text_column(t("Failure"))
@@ -30,7 +33,8 @@ module Kuiq
                   t("Success") => :success,
                   t("Failure") => :failure,
                   t("TotalExecutionTime") => :tet,
-                  t("AvgExecutionTime") => :aet
+                  t("AvgExecutionTime") => :aet,
+                  "Swatch" => :swatch
                 }]
             }
           }
