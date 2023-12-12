@@ -155,74 +155,74 @@ module Kuiq
       end
 
       def hover_stats
+        return unless display_attributes_on_hover
+        
         require "bigdecimal"
         require "perfect_shape/point"
         
-        if @hover_point
+        if @hover_point && lines && lines[0] && lines[0][:points] && lines[0][:points][0]
           x = @hover_point[:x]
-          # TODO make this dynamically display labels for every line (not expecting 2 lines exactly)
-          closest_failed_point = lines[0][:points].min_by { |point| (point[:x] - x).abs }
-          closest_processed_point = lines[1][:points][lines[0][:points].index(closest_failed_point)] if closest_failed_point
-          closest_x = closest_processed_point&.[](:x)
+          closest_point_attributes = display_attributes_on_hover.last.values
+          closest_point_index = lines[0][:points].each_with_index.min_by { |point, index| (point[:x] - x).abs }[1]
+          closest_points = closest_point_attributes.each_with_index.map do |attribute, index|
+            lines[index][:points][closest_point_index]
+          end
+          closest_x = closest_points[0]&.[](:x)
           closest_x_distance = PerfectShape::Point.point_distance(x.to_f, 0, closest_x.to_f, 0)
           if closest_x_distance < graph_point_distance
             line(closest_x, graph_padding_height, closest_x, height - graph_padding_height) {
               stroke graph_stroke_hover_line
             }
-            circle(closest_failed_point[:x], closest_failed_point[:y], 4) {
-              fill lines[0][:stroke]
-            }
-            circle(closest_failed_point[:x], closest_failed_point[:y], 2) {
-              fill :white
-            }
-            circle(closest_processed_point[:x], closest_processed_point[:y], 4) {
-              fill lines[1][:stroke]
-            }
-            circle(closest_processed_point[:x], closest_processed_point[:y], 2) {
-              fill :white
-            }
-            text_label = closest_processed_point[:time]
+            closest_points.each_with_index do |closest_point, index|
+              circle(closest_point[:x], closest_point[:y], 4) {
+                fill lines[index][:stroke]
+              }
+              circle(closest_point[:x], closest_point[:y], 2) {
+                fill :white
+              }
+            end
+            text_label = closest_points[0][display_attributes_on_hover.first]
             text_label_width = estimate_width_of_text(text_label, DEFAULT_GRAPH_FONT_MARKER_TEXT)
-            failed_text = "#{t("Failed")}: #{closest_failed_point[:failed]}"
-            failed_text_width = estimate_width_of_text(failed_text, graph_font_marker_text)
-            processed_text = "#{t("Processed")}: #{closest_processed_point[:processed]}"
-            processed_text_width = estimate_width_of_text(processed_text, graph_font_marker_text)
+            closest_point_texts = closest_point_attributes.each_with_index.map do |attribute, index|
+              "#{display_attributes_on_hover.last.keys[index]}: #{closest_points[index][attribute]}"
+            end
+            closest_point_text_widths = closest_point_texts.each_with_index.map do |text, index|
+              estimate_width_of_text(text, graph_font_marker_text)
+            end
             square_size = 12.0
             square_to_label_padding = 10.0
             label_padding = 10.0
-            text_label_x = width - (
-              text_label_width + label_padding +
-              square_size + square_to_label_padding + failed_text_width + label_padding +
-              square_size + square_to_label_padding + processed_text_width - graph_padding_width)
+            text_label_x = width - graph_padding_width - text_label_width - label_padding -
+              (closest_point_attributes.size*(square_size + square_to_label_padding) + (closest_point_attributes.size - 1)*label_padding + closest_point_text_widths.sum)
             text_label_y = height + graph_padding_height
+            
             text(text_label_x, text_label_y, text_label_width) {
               string(text_label) {
                 font DEFAULT_GRAPH_FONT_MARKER_TEXT
                 color graph_color_marker_text
               }
             }
-            failed_square_x = text_label_x + text_label_width + label_padding
-            square(failed_square_x, text_label_y + 2, square_size) {
-              fill lines[0][:stroke]
-            }
-            failed_label_x = failed_square_x + square_size + square_to_label_padding
-            text(failed_label_x, text_label_y, failed_text_width) {
-              string(failed_text) {
-                font graph_font_marker_text
-                color graph_color_marker_text
+            
+            relative_x = text_label_x + text_label_width
+            closest_point_attributes.size.times do |index|
+              square_x = relative_x + label_padding
+              
+              square(square_x, text_label_y + 2, square_size) {
+                fill lines[index][:stroke]
               }
-            }
-            processed_square_x = failed_label_x + failed_text_width + label_padding
-            square(processed_square_x, text_label_y + 2, square_size) {
-              fill lines[1][:stroke]
-            }
-            processed_label_x = processed_square_x + square_size + square_to_label_padding
-            text(processed_label_x, text_label_y, processed_text_width) {
-              string(processed_text) {
-                font graph_font_marker_text
-                color graph_color_marker_text
+              
+              attribute_label_x = square_x + square_size + square_to_label_padding
+              attribute_text = closest_point_texts[index]
+              attribute_text_width = closest_point_text_widths[index]
+              relative_x = attribute_label_x + attribute_text_width
+              
+              text(attribute_label_x, text_label_y, attribute_text_width) {
+                string(attribute_text) {
+                  font graph_font_marker_text
+                  color graph_color_marker_text
+                }
               }
-            }
+            end
           end
         end
       end

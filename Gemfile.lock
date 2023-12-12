@@ -31,6 +31,7 @@ GEM
     language_server-protocol (3.17.0.3)
     libui (0.1.2.pre)
     libui (0.1.2.pre-arm64-darwin)
+    libui (0.1.2.pre-x86_64-darwin)
     lint_roller (1.1.0)
     matrix (0.4.2)
     method_source (1.0.0)
@@ -111,6 +112,7 @@ GEM
 PLATFORMS
   arm64-darwin-21
   arm64-darwin-22
+  x86_64-darwin-22
   x86_64-linux
 
 DEPENDENCIES

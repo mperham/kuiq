@@ -57,6 +57,7 @@ module Kuiq
               width: @presenter.graph_width,
               height: @presenter.graph_height,
               lines: report_graph_lines,
+              display_attributes_on_hover: [:time, t('Failed') => :failed, t('Processed') => :processed]
             )
           }
           
