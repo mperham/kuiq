@@ -30,3 +30,13 @@ Specify your Redis location with `REDIS_URL`:
 ```
 REDIS_URL=redis://localhost:6379/0 bundle exec bin/kuiq
 ```
+
+## Screenshot
+
+If all goes well, you'll see something like this:
+
+![ui.png](misc/ui.png)
+
+## Author
+
+Andy Maleh, Mike Perham
