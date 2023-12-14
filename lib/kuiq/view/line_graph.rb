@@ -23,8 +23,15 @@ module Kuiq
       option :width, default: 600
       option :height, default: 200
       
-      # Hash like {name: 'Attribute Name', stroke: [28, 34, 89, thickness: 3], points: [{x: , y: , extra_keys...}]}
-      # or Array of Hash'es like [{name: 'Attribute Name', stroke: [28, 34, 89, thickness: 3], points: -> {...}}, {name: 'Attribute Name', stroke: [28, 34, 89, thickness: 3], points: -> {...}}, ...]
+      # Hash or Array of Hash's like:
+      # {
+      #   name: 'Attribute Name',
+      #   stroke: [28, 34, 89, thickness: 3],
+      #   x_value_start: Time.now,
+      #   x_interval_in_seconds: 2,
+      #   x_value_format: ->(time) {time.strftime('%s')},
+      #   y_values: [...]
+      # }
       option :lines, default: []
       
       option :grid_marker_points, default: []
@@ -44,11 +51,11 @@ module Kuiq
       
       option :graph_status_height, default: DEFAULT_GRAPH_STATUS_HEIGHT
       
-      # Attribute key like :date_string, which is expected to be present on every point inside its attribute hash that has x,y coordinates
-      # When display_attributes_on_hover is not nil, this enables user to hover over graph with mouse, and vertical line is rendered on top of closest graph point,
-      # displaying the that point's value for `display_attributes_on_hover` along with its attribute values.
-      # Format: [x_related_attribute_to_display, y_related_attribute1_label => y_related_attribute1, y_related_attribute2_label => y_related_attribute2, ...]
-      option :display_attributes_on_hover, default: nil
+      option :display_attributes_on_hover, default: false
+      
+      before_body do
+        self.lines = [lines] if lines.is_a?(Hash)
+      end
       
       after_body do
         observe(self, :lines) { body_root.queue_redraw_all }
@@ -57,10 +64,10 @@ module Kuiq
       body {
         area { |graph_area|
           on_draw do
+            clear_drawing_cache
             graph_background
             grid_lines
             all_line_graphs
-            # TODO shrink graph height if display_attributes_on_hover is nil and hover_stats won't get rendered
             hover_stats
           end
 
@@ -81,8 +88,14 @@ module Kuiq
       
       private
       
+      def clear_drawing_cache
+        @grid_marker_points = nil
+        @points = nil
+        @y_value_max_for_all_lines = nil
+      end
+      
       def graph_background
-        rectangle(0, 0, width, height + graph_status_height) {
+        rectangle(0, 0, width, height + (display_attributes_on_hover ? graph_status_height : 0)) {
           fill 255, 255, 255
         }
       end
@@ -99,7 +112,7 @@ module Kuiq
           grid_marker_number = grid_marker_number_value.to_s
           graph_stroke_marker_value = Glimmer::LibUI.interpret_color(graph_stroke_marker)
           graph_stroke_marker_value[:thickness] = (index != grid_marker_points.size - 1 ? 2 : 1) if graph_stroke_marker_value[:thickness].nil?
-          mod_value = (2 * ((grid_marker_points.size / max_markers) + 1))
+          mod_value = (2 * ((grid_marker_points.size / max_marker_count) + 1))
           comparison_value = (mod_value > 2) ? 0 : 1
           if mod_value > 2
             if grid_marker_number_value % mod_value == comparison_value
@@ -130,21 +143,32 @@ module Kuiq
         end
       end
       
-      def max_markers
+      def grid_marker_points
+        if @grid_marker_points.nil?
+          graph_max = [y_value_max_for_all_lines, 1].max
+          current_graph_height = (height - graph_padding_height * 2)
+          division_height = current_graph_height / graph_max
+          @grid_marker_points = graph_max.to_i.times.map do |marker_index|
+            x = graph_padding_width
+            y = graph_padding_height + marker_index * division_height
+            {x: x, y: y}
+          end
+        end
+        @grid_marker_points
+      end
+      
+      def max_marker_count
         [(0.15*height).to_i, 1].max
       end
       
       def all_line_graphs
-        if lines.is_a?(Hash)
-          single_line_graph(lines)
-        elsif lines.is_a?(Array)
-          lines.each { |graph_line| single_line_graph(graph_line) }
-        end
+        lines.each { |graph_line| single_line_graph(graph_line) }
       end
 
       def single_line_graph(graph_line)
         last_point = nil
-        graph_line[:points].each do |point|
+        points = calculate_points(graph_line)
+        points.each do |point|
           if last_point
             line(last_point[:x], last_point[:y], point[:x], point[:y]) {
               stroke graph_line[:stroke]
@@ -153,6 +177,44 @@ module Kuiq
           last_point = point
         end
       end
+      
+      def calculate_points(graph_line)
+        @points ||= {}
+        if @points[graph_line].nil?
+          y_values = graph_line[:y_values] || []
+          y_values = y_values[0, max_visible_point_count]
+          graph_max = [y_value_max_for_all_lines, 1].max
+          points = y_values.each_with_index.map do |y_value, index|
+            x = width - graph_padding_width - (index * graph_point_distance)
+            y = ((height - graph_padding_height) - y_value * ((height - graph_padding_height * 2) / graph_max))
+            {x: x, y: y}
+          end
+          @points[graph_line] = translate_points(points)
+        end
+        @points[graph_line]
+      end
+      
+      def y_value_max_for_all_lines
+        if @y_value_max_for_all_lines.nil?
+          all_y_values = lines.map { |line| line[:y_values] }.reduce(:+)
+          @y_value_max_for_all_lines = all_y_values.max.to_f
+        end
+        @y_value_max_for_all_lines
+      end
+      
+      def translate_points(points)
+        max_job_count_before_translation = ((width / graph_point_distance).to_i + 1)
+        x_translation = [(points.size - max_job_count_before_translation) * graph_point_distance, 0].max
+        if x_translation > 0
+          points.each do |point|
+            # need to check if point[:x] is present because if the user shrinks the window, we drop points
+            point[:x] = point[:x] - x_translation if point[:x]
+          end
+        end
+        points
+      end
+      
+      def max_visible_point_count = (width / graph_point_distance).to_i + 1
 
       def hover_stats
         return unless display_attributes_on_hover
@@ -160,13 +222,10 @@ module Kuiq
         require "bigdecimal"
         require "perfect_shape/point"
         
-        if @hover_point && lines && lines[0] && lines[0][:points] && lines[0][:points][0]
+        if @hover_point && lines && lines[0] && @points && @points[lines[0]] && !@points[lines[0]].empty?
           x = @hover_point[:x]
-          closest_point_attributes = display_attributes_on_hover.last.values
-          closest_point_index = lines[0][:points].each_with_index.min_by { |point, index| (point[:x] - x).abs }[1]
-          closest_points = closest_point_attributes.each_with_index.map do |attribute, index|
-            lines[index][:points][closest_point_index]
-          end
+          closest_point_index = @points[lines[0]].each_with_index.min_by { |point, index| (point[:x] - x).abs }[1]
+          closest_points = lines.map { |line| @points[line][closest_point_index] }
           closest_x = closest_points[0]&.[](:x)
           closest_x_distance = PerfectShape::Point.point_distance(x.to_f, 0, closest_x.to_f, 0)
           if closest_x_distance < graph_point_distance
@@ -181,41 +240,45 @@ module Kuiq
                 fill :white
               }
             end
-            text_label = closest_points[0][display_attributes_on_hover.first]
-            text_label_width = estimate_width_of_text(text_label, DEFAULT_GRAPH_FONT_MARKER_TEXT)
-            closest_point_texts = closest_point_attributes.each_with_index.map do |attribute, index|
-              "#{display_attributes_on_hover.last.keys[index]}: #{closest_points[index][attribute]}"
+            x_value_format = lines[0][:x_value_format] || :to_s
+            text_label_value = lines[0][:x_value_start] - (lines[0][:x_interval_in_seconds] * closest_point_index)
+            if (x_value_format.is_a?(Symbol) || x_value_format.is_a?(String))
+              text_label = text_label_value.send(x_value_format)
+            else
+              text_label = x_value_format.call(text_label_value)
             end
-            closest_point_text_widths = closest_point_texts.each_with_index.map do |text, index|
+            text_label_width = estimate_width_of_text(text_label, DEFAULT_GRAPH_FONT_MARKER_TEXT)
+            closest_point_texts = lines.map { |line| "#{line[:name]}: #{line[:y_values][closest_point_index]}" }
+            closest_point_text_widths = closest_point_texts.map do |text|
               estimate_width_of_text(text, graph_font_marker_text)
             end
             square_size = 12.0
             square_to_label_padding = 10.0
             label_padding = 10.0
             text_label_x = width - graph_padding_width - text_label_width - label_padding -
-              (closest_point_attributes.size*(square_size + square_to_label_padding) + (closest_point_attributes.size - 1)*label_padding + closest_point_text_widths.sum)
+              (lines.size*(square_size + square_to_label_padding) + (lines.size - 1)*label_padding + closest_point_text_widths.sum)
             text_label_y = height + graph_padding_height
-            
+
             text(text_label_x, text_label_y, text_label_width) {
               string(text_label) {
                 font DEFAULT_GRAPH_FONT_MARKER_TEXT
                 color graph_color_marker_text
               }
             }
-            
+
             relative_x = text_label_x + text_label_width
-            closest_point_attributes.size.times do |index|
+            lines.size.times do |index|
               square_x = relative_x + label_padding
-              
+
               square(square_x, text_label_y + 2, square_size) {
                 fill lines[index][:stroke]
               }
-              
+
               attribute_label_x = square_x + square_size + square_to_label_padding
               attribute_text = closest_point_texts[index]
               attribute_text_width = closest_point_text_widths[index]
               relative_x = attribute_label_x + attribute_text_width
-              
+
               text(attribute_label_x, text_label_y, attribute_text_width) {
                 string(attribute_text) {
                   font graph_font_marker_text

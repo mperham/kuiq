@@ -33,55 +33,24 @@ module Kuiq
         @stats = @stats[0, GRAPH_MAX_POINTS_LARGEST_SCREEN]
       end
       
-      def visible_stats
-        @stats[0, graph_max_points]
-      end
-      
-      def graph_max_points = (graph_width / GRAPH_POINT_DISTANCE).to_i + 1
-      
-      # TODO Extract this logic to line_graph custom control
-      def report_points(job_status)
-        points = []
-        current_stats = visible_stats
-        return points if current_stats.size <= 1
-        graph_max = [job_status_max, 1].max
-        current_stats.each_with_index do |stat, n|
-          next if n == 0
-          job_status_diff_value = current_stats[n - 1][job_status] - stat[job_status]
-          x = graph_width - ((n - 1) * GRAPH_POINT_DISTANCE) - GRAPH_PADDING_WIDTH
-          y = ((graph_height - GRAPH_PADDING_HEIGHT) - job_status_diff_value * ((graph_height - GRAPH_PADDING_HEIGHT * 2) / graph_max))
-          points << {x: x, y: y, time: stat[:time], job_status => job_status_diff_value}
-        end
-        translate_points(points)
-        points
-      end
-
-      # TODO Extract this logic to line_graph custom control
-      def grid_marker_points
-        graph_max = [job_status_max, 1].max
-        current_graph_height = (graph_height - GRAPH_PADDING_HEIGHT * 2)
-        division_height = current_graph_height / graph_max
-        graph_max.times.map do |marker_index|
-          x = GRAPH_PADDING_WIDTH
-          y = GRAPH_PADDING_HEIGHT + marker_index * division_height
-          {x: x, y: y}
-        end
-      end
-
-      # TODO Extract this logic to line_graph custom control
-      def job_status_max
-        max = 0
-        current_stats = visible_stats
-        current_stats.each_with_index do |job, n|
-          next if n == 0
-          JOB_STATUSES.each do |job_status|
-            job_status_diff_value = current_stats[n - 1][job_status] - job[job_status]
-            max = job_status_diff_value if job_status_diff_value > max
+      def report_stats(job_status)
+        reported_stats = {
+          x_interval_in_seconds: @job_manager.polling_interval,
+          y_values: [],
+          x_value_format: ->(time) { live_poll_time_format(time) },
+        }
+        return reported_stats if @stats.size <= 1
+        @stats.each_with_index do |stat, n|
+          if n == 0
+            reported_stats[:x_value_start] = stat[:raw_time]
+            next
           end
+          y_value = @stats[n - 1][job_status] - stat[job_status]
+          reported_stats[:y_values] << y_value
         end
-        max
+        reported_stats
       end
-      
+
       def multi_day_history(day_count)
         Sidekiq::Stats::History.new(day_count)
       end
@@ -123,17 +92,6 @@ module Kuiq
       end
 
       private
-
-      def translate_points(points)
-        max_job_count_before_translation = ((graph_width / GRAPH_POINT_DISTANCE).to_i + 1)
-        x_translation = [(points.size - max_job_count_before_translation) * GRAPH_POINT_DISTANCE, 0].max
-        if x_translation > 0
-          points.each do |point|
-            # need to check if point[0] is present because if the user shrinks the window, we drop points
-            point[0] = point[0] - x_translation if point[0]
-          end
-        end
-      end
 
       def live_poll_time_format(time)
         time.strftime("%a %d %b %Y %T GMT")

@@ -23,7 +23,6 @@ module Kuiq
           on_content_size_changed do
             @live_poll_line_graph.width = @presenter.graph_width = graph_width
             @live_poll_line_graph.height = @presenter.graph_height = graph_height
-            @live_poll_line_graph.grid_marker_points = presenter.grid_marker_points
             @live_poll_line_graph.lines = report_graph_lines
           end
         }
@@ -43,7 +42,6 @@ module Kuiq
           if time_remaining == 0
             presenter.record_stats
             job_manager.refresh
-            @live_poll_line_graph.grid_marker_points = presenter.grid_marker_points
             @live_poll_line_graph.lines = report_graph_lines
             time_remaining = job_manager.polling_interval
           end
@@ -57,7 +55,7 @@ module Kuiq
               width: @presenter.graph_width,
               height: @presenter.graph_height,
               lines: report_graph_lines,
-              display_attributes_on_hover: [:time, t('Failed') => :failed, t('Processed') => :processed]
+              display_attributes_on_hover: true,
             )
           }
           
@@ -87,8 +85,7 @@ module Kuiq
           {
             name: t(job_status.capitalize),
             stroke: [*GRAPH_DASHBOARD_COLORS[job_status], thickness: 2],
-            points: presenter.report_points(job_status),
-          }
+          }.merge(presenter.report_stats(job_status))
         end
       end
       
