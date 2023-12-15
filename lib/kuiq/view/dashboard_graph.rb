@@ -257,7 +257,7 @@ module Kuiq
             }
             day = point[:raw_time].strftime("%e")
             font_size = 14
-            text(point[:x], presenter.graph_height - GRAPH_PADDING_HEIGHT - font_size*1.4, font_size) {
+            text(point[:x], presenter.graph_height - GRAPH_PADDING_HEIGHT - font_size*1.4, font_size*2) {
               string(day) {
                 font family: "Arial", size: font_size
                 color GRAPH_DASHBOARD_COLORS[:failed]
