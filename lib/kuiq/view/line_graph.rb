@@ -64,13 +64,21 @@ module Kuiq
       end
       
       after_body do
-        observe(self, :lines) { body_root.queue_redraw_all }
+        observe(self, :lines) do
+          clear_drawing_cache
+          body_root.queue_redraw_all
+        end
+        observe(self, :width) do
+          clear_drawing_cache
+        end
+        observe(self, :height) do
+          clear_drawing_cache
+        end
       end
   
       body {
         area { |graph_area|
           on_draw do
-            clear_drawing_cache
             calculate_dynamic_options
             graph_background
             grid_lines
@@ -81,14 +89,23 @@ module Kuiq
 
           on_mouse_moved do |event|
             @hover_point = {x: event[:x], y: event[:y]}
-            # TODO optimize this code by not redrawing unless a change in the nearest point happens
-            graph_area.queue_redraw_all
+        
+            if @hover_point && lines && lines[0] && @points && @points[lines[0]] && !@points[lines[0]].empty?
+              x = @hover_point[:x]
+              closest_point_index = @points[lines[0]].each_with_index.min_by { |point, index| (point[:x] - x).abs }[1]
+              if closest_point_index != @closest_point_index
+                @closest_point_index = closest_point_index
+                graph_area.queue_redraw_all
+              end
+            end
           end
 
           on_mouse_exited do |outside|
-            @hover_point = nil
-            # TODO optimize this code by not redrawing unless a change in the nearest point happens
-            graph_area.queue_redraw_all
+            if !@hover_point.nil?
+              @hover_point = nil
+              @closest_point_index = nil
+              graph_area.queue_redraw_all
+            end
           end
         }
       }
@@ -97,9 +114,9 @@ module Kuiq
       
       def clear_drawing_cache
         @graph_point_distance_per_line = nil
+        @y_value_max_for_all_lines = nil
         @grid_marker_points = nil
         @points = nil
-        @y_value_max_for_all_lines = nil
       end
       
       def calculate_dynamic_options
@@ -302,8 +319,7 @@ module Kuiq
         
         if @hover_point && lines && lines[0] && @points && @points[lines[0]] && !@points[lines[0]].empty?
           x = @hover_point[:x]
-          closest_point_index = @points[lines[0]].each_with_index.min_by { |point, index| (point[:x] - x).abs }[1]
-          closest_points = lines.map { |line| @points[line][closest_point_index] }
+          closest_points = lines.map { |line| @points[line][@closest_point_index] }
           closest_x = closest_points[0]&.[](:x)
           closest_x_distance = PerfectShape::Point.point_distance(x.to_f, 0, closest_x.to_f, 0)
           # Today, we make the assumption that all lines have points along the same x-axis values
@@ -320,9 +336,9 @@ module Kuiq
                 fill :white
               }
             end
-            text_label = formatted_x_value(closest_point_index)
+            text_label = formatted_x_value(@closest_point_index)
             text_label_width = estimate_width_of_text(text_label, DEFAULT_GRAPH_FONT_MARKER_TEXT)
-            closest_point_texts = lines.map { |line| "#{line[:name]}: #{line[:y_values][closest_point_index]}" }
+            closest_point_texts = lines.map { |line| "#{line[:name]}: #{line[:y_values][@closest_point_index]}" }
             closest_point_text_widths = closest_point_texts.map do |text|
               estimate_width_of_text(text, graph_font_marker_text)
             end
@@ -365,6 +381,8 @@ module Kuiq
       end
       
       def formatted_x_value(x_value_index)
+        # Today, we make the assumption that all lines have points along the same x-axis values
+        # TODO In the future, we can support different x values along different lines
         graph_line = lines[0]
         x_value_format = graph_line[:x_value_format] || :to_s
         x_value = calculated_x_value(x_value_index)
@@ -376,6 +394,8 @@ module Kuiq
       end
       
       def calculated_x_value(x_value_index)
+        # Today, we make the assumption that all lines have points along the same x-axis values
+        # TODO In the future, we can support different x values along different lines
         graph_line = lines[0]
         graph_line[:x_value_start] - (graph_line[:x_interval_in_seconds] * x_value_index)
       end
