@@ -54,7 +54,7 @@ module Kuiq
       
       def report_history_stats(job_status, day_count)
         reported_stats = {
-          x_interval_in_seconds: day_count*DAY_IN_SECONDS,
+          x_interval_in_seconds: DAY_IN_SECONDS,
           y_values: [],
           x_value_format: ->(time) { time.strftime('%Y-%m-%d') },
         }
@@ -72,42 +72,6 @@ module Kuiq
 
       def history(day_count:)
         Sidekiq::Stats::History.new(day_count)
-      end
-      
-      def multi_day_report_points(day_count, job_status)
-        @multi_day_stats = history(day_count: day_count).send(job_status)
-        points = []
-        return points if @multi_day_stats.size <= 1
-        graph_max = [multi_day_job_status_max(day_count), 1].max
-        @multi_day_stats.each_with_index do |stat, n|
-          time = stat.first
-          value = stat.last
-          x = graph_width - (n * multi_day_graph_point_distance(day_count)) - GRAPH_PADDING_WIDTH
-          y = ((graph_height - GRAPH_PADDING_HEIGHT) - value*((graph_height - GRAPH_PADDING_HEIGHT*2)/graph_max))
-          raw_time = DateTime.strptime(time, '%Y-%m-%d').to_time
-          points << {x: x, y: y, time: time, raw_time: raw_time, job_status => value}
-        end
-        points
-      end
-      
-      def multi_day_grid_marker_points(day_count)
-        graph_max = [multi_day_job_status_max(day_count), 1].max
-        current_graph_height = (graph_height - GRAPH_PADDING_HEIGHT*2)
-        division_height = current_graph_height / graph_max
-        graph_max.times.map do |marker_index|
-          x = GRAPH_PADDING_WIDTH
-          y = GRAPH_PADDING_HEIGHT + marker_index * division_height
-          {x: x, y: y}
-        end
-      end
-      
-      def multi_day_job_status_max(day_count)
-        history = history(day_count: day_count)
-        JOB_STATUSES.map { |job_status| history.send(job_status).values }.reduce(:+).max
-      end
-      
-      def multi_day_graph_point_distance(day_count)
-        (graph_width - 2.0*GRAPH_PADDING_WIDTH - 30) / (day_count-1).to_f
       end
 
       private

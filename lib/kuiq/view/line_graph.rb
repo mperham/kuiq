@@ -7,18 +7,23 @@ module Kuiq
       
       DEFAULT_GRAPH_PADDING_WIDTH = 5.0
       DEFAULT_GRAPH_PADDING_HEIGHT = 5.0
+      DEFAULT_GRAPH_GRID_MARKER_PADDING_WIDTH = 30.0
       DEFAULT_GRAPH_POINT_DISTANCE = 15.0
       
       DEFAULT_GRAPH_STROKE_GRID = [185, 184, 185]
       DEFAULT_GRAPH_STROKE_MARKER = [185, 184, 185]
       DEFAULT_GRAPH_STROKE_MARKER_LINE = [217, 217, 217, thickness: 1, dashes: [1, 1]]
+      DEFAULT_GRAPH_STROKE_PERIODIC_LINE = [121, 121, 121, thickness: 1, dashes: [1, 1]]
       DEFAULT_GRAPH_STROKE_HOVER_LINE = [133, 133, 133]
       
       DEFAULT_GRAPH_COLOR_MARKER_TEXT = [96, 96, 96]
+      DEFAULT_GRAPH_COLOR_PERIOD_TEXT = [163, 40, 39]
       
       DEFAULT_GRAPH_FONT_MARKER_TEXT = {family: "Arial", size: 14}
       
       DEFAULT_GRAPH_STATUS_HEIGHT = 30.0
+      
+      DAY_IN_SECONDS = 60*60*24
   
       option :width, default: 600
       option :height, default: 200
@@ -34,18 +39,19 @@ module Kuiq
       # }
       option :lines, default: []
       
-      option :grid_marker_points, default: []
-      
       option :graph_padding_width, default: DEFAULT_GRAPH_PADDING_WIDTH
       option :graph_padding_height, default: DEFAULT_GRAPH_PADDING_HEIGHT
+      option :graph_grid_marker_padding_width, default: DEFAULT_GRAPH_GRID_MARKER_PADDING_WIDTH
       option :graph_point_distance, default: DEFAULT_GRAPH_POINT_DISTANCE
       
       option :graph_stroke_grid, default: DEFAULT_GRAPH_STROKE_GRID
       option :graph_stroke_marker, default: DEFAULT_GRAPH_STROKE_MARKER
       option :graph_stroke_marker_line, default: DEFAULT_GRAPH_STROKE_MARKER_LINE
+      option :graph_stroke_periodic_line, default: DEFAULT_GRAPH_STROKE_PERIODIC_LINE
       option :graph_stroke_hover_line, default: DEFAULT_GRAPH_STROKE_HOVER_LINE
       
       option :graph_color_marker_text, default: DEFAULT_GRAPH_COLOR_MARKER_TEXT
+      option :graph_color_period_text, default: DEFAULT_GRAPH_COLOR_PERIOD_TEXT
       
       option :graph_font_marker_text, default: DEFAULT_GRAPH_FONT_MARKER_TEXT
       
@@ -69,6 +75,7 @@ module Kuiq
             graph_background
             grid_lines
             all_line_graphs
+            periodic_lines
             hover_stats
           end
 
@@ -79,7 +86,6 @@ module Kuiq
           end
 
           on_mouse_exited do |outside|
-            # TODO refactor/rename to @hover_point
             @hover_point = nil
             # TODO optimize this code by not redrawing unless a change in the nearest point happens
             graph_area.queue_redraw_all
@@ -104,8 +110,7 @@ module Kuiq
         return unless graph_point_distance == :width_divided_by_point_count
         
         @graph_point_distance_per_line = lines.inject({}) do |hash, line|
-          # TODO replace 30 with a variable option or constant
-          hash.merge(line => (width - 2.0*graph_padding_width - 30) / (line[:y_values].size - 1).to_f)
+          hash.merge(line => (width - 2.0*graph_padding_width - graph_grid_marker_padding_width) / (line[:y_values].size - 1).to_f)
         end
       end
       
@@ -128,7 +133,7 @@ module Kuiq
         }
         grid_marker_points.each_with_index do |marker_point, index|
           grid_marker_number_value = (grid_marker_points.size - index).to_i
-          grid_marker_number = (grid_marker_number_value >= 1000) ? "#{grid_marker_number_value / 1000}K" : grid_marker_number.to_s
+          grid_marker_number = (grid_marker_number_value >= 1000) ? "#{grid_marker_number_value / 1000}K" : grid_marker_number_value.to_s
           graph_stroke_marker_value = Glimmer::LibUI.interpret_color(graph_stroke_marker)
           graph_stroke_marker_value[:thickness] = (index != grid_marker_points.size - 1 ? 2 : 1) if graph_stroke_marker_value[:thickness].nil?
           mod_value = (2 * ((grid_marker_points.size / max_marker_count) + 1))
@@ -206,7 +211,7 @@ module Kuiq
           points = y_values.each_with_index.map do |y_value, index|
             x = width - graph_padding_width - (index * graph_point_distance_for_line(graph_line))
             y = ((height - graph_padding_height) - y_value * ((height - graph_padding_height * 2) / graph_max))
-            {x: x, y: y}
+            {x: x, y: y, index: index, y_value: y_value}
           end
           @points[graph_line] = translate_points(graph_line, points)
         end
@@ -235,6 +240,60 @@ module Kuiq
       
       def max_visible_point_count(graph_line) = (width / graph_point_distance_for_line(graph_line)).to_i + 1
 
+      def periodic_lines
+        return unless lines && lines[0] && lines[0][:x_interval_in_seconds] && lines[0][:x_interval_in_seconds] == DAY_IN_SECONDS
+        day_count = lines[0][:y_values].size
+        case day_count
+        when ..7
+          @points[lines[0]].each do |point|
+            line(point[:x], graph_padding_height, point[:x], height - graph_padding_height) {
+              stroke graph_stroke_periodic_line
+            }
+            day = calculated_x_value(point[:index]).strftime("%e")
+            font_size = graph_font_marker_text[:size]
+            text(point[:x], height - graph_padding_height - font_size*1.4, font_size*2) {
+              string(day) {
+                font graph_font_marker_text
+                color graph_color_period_text
+              }
+            }
+          end
+        when ..30
+          @points[lines[0]].each_with_index do |point, index|
+            day_number = index + 1
+            if day_number % 7 == 0
+              line(point[:x], graph_padding_height, point[:x], height - graph_padding_height) {
+                stroke graph_stroke_periodic_line
+              }
+              date = calculated_x_value(point[:index]).strftime("%b %e")
+              font_size = graph_font_marker_text[:size]
+              text(point[:x] + 4, height - graph_padding_height - font_size*1.4, font_size*6) {
+                string(date) {
+                  font graph_font_marker_text
+                  color graph_color_period_text
+                }
+              }
+            end
+          end
+        else
+          @points[lines[0]].each do |point|
+            if calculated_x_value(point[:index]).strftime("%d") == "01"
+              line(point[:x], graph_padding_height, point[:x], height - graph_padding_height) {
+                stroke graph_stroke_periodic_line
+              }
+              date = calculated_x_value(point[:index]).strftime("%b")
+              font_size = graph_font_marker_text[:size]
+              text(point[:x] + 4, height - graph_padding_height - font_size*1.4, font_size*6) {
+                string(date) {
+                  font graph_font_marker_text
+                  color graph_color_period_text
+                }
+              }
+            end
+          end
+        end
+      end
+      
       def hover_stats
         return unless display_attributes_on_hover
         
@@ -261,13 +320,7 @@ module Kuiq
                 fill :white
               }
             end
-            x_value_format = lines[0][:x_value_format] || :to_s
-            text_label_value = lines[0][:x_value_start] - (lines[0][:x_interval_in_seconds] * closest_point_index)
-            if (x_value_format.is_a?(Symbol) || x_value_format.is_a?(String))
-              text_label = text_label_value.send(x_value_format)
-            else
-              text_label = x_value_format.call(text_label_value)
-            end
+            text_label = formatted_x_value(closest_point_index)
             text_label_width = estimate_width_of_text(text_label, DEFAULT_GRAPH_FONT_MARKER_TEXT)
             closest_point_texts = lines.map { |line| "#{line[:name]}: #{line[:y_values][closest_point_index]}" }
             closest_point_text_widths = closest_point_texts.map do |text|
@@ -309,6 +362,22 @@ module Kuiq
             end
           end
         end
+      end
+      
+      def formatted_x_value(x_value_index)
+        graph_line = lines[0]
+        x_value_format = graph_line[:x_value_format] || :to_s
+        x_value = calculated_x_value(x_value_index)
+        if (x_value_format.is_a?(Symbol) || x_value_format.is_a?(String))
+          x_value.send(x_value_format)
+        else
+          x_value_format.call(x_value)
+        end
+      end
+      
+      def calculated_x_value(x_value_index)
+        graph_line = lines[0]
+        graph_line[:x_value_start] - (graph_line[:x_interval_in_seconds] * x_value_index)
       end
       
       def estimate_width_of_text(text_string, font_properties)
