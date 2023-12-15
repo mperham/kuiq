@@ -65,6 +65,7 @@ module Kuiq
         area { |graph_area|
           on_draw do
             clear_drawing_cache
+            calculate_dynamic_options
             graph_background
             grid_lines
             all_line_graphs
@@ -89,9 +90,27 @@ module Kuiq
       private
       
       def clear_drawing_cache
+        @graph_point_distance_per_line = nil
         @grid_marker_points = nil
         @points = nil
         @y_value_max_for_all_lines = nil
+      end
+      
+      def calculate_dynamic_options
+        calculate_graph_point_distance_per_line
+      end
+      
+      def calculate_graph_point_distance_per_line
+        return unless graph_point_distance == :width_divided_by_point_count
+        
+        @graph_point_distance_per_line = lines.inject({}) do |hash, line|
+          # TODO replace 30 with a variable option or constant
+          hash.merge(line => (width - 2.0*graph_padding_width - 30) / (line[:y_values].size - 1).to_f)
+        end
+      end
+      
+      def graph_point_distance_for_line(line)
+        @graph_point_distance_per_line&.[](line) || graph_point_distance
       end
       
       def graph_background
@@ -108,8 +127,8 @@ module Kuiq
           stroke graph_stroke_grid
         }
         grid_marker_points.each_with_index do |marker_point, index|
-          grid_marker_number_value = grid_marker_points.size - index
-          grid_marker_number = grid_marker_number_value.to_s
+          grid_marker_number_value = (grid_marker_points.size - index).to_i
+          grid_marker_number = (grid_marker_number_value >= 1000) ? "#{grid_marker_number_value / 1000}K" : grid_marker_number.to_s
           graph_stroke_marker_value = Glimmer::LibUI.interpret_color(graph_stroke_marker)
           graph_stroke_marker_value[:thickness] = (index != grid_marker_points.size - 1 ? 2 : 1) if graph_stroke_marker_value[:thickness].nil?
           mod_value = (2 * ((grid_marker_points.size / max_marker_count) + 1))
@@ -182,14 +201,14 @@ module Kuiq
         @points ||= {}
         if @points[graph_line].nil?
           y_values = graph_line[:y_values] || []
-          y_values = y_values[0, max_visible_point_count]
+          y_values = y_values[0, max_visible_point_count(graph_line)]
           graph_max = [y_value_max_for_all_lines, 1].max
           points = y_values.each_with_index.map do |y_value, index|
-            x = width - graph_padding_width - (index * graph_point_distance)
+            x = width - graph_padding_width - (index * graph_point_distance_for_line(graph_line))
             y = ((height - graph_padding_height) - y_value * ((height - graph_padding_height * 2) / graph_max))
             {x: x, y: y}
           end
-          @points[graph_line] = translate_points(points)
+          @points[graph_line] = translate_points(graph_line, points)
         end
         @points[graph_line]
       end
@@ -202,9 +221,9 @@ module Kuiq
         @y_value_max_for_all_lines
       end
       
-      def translate_points(points)
-        max_job_count_before_translation = ((width / graph_point_distance).to_i + 1)
-        x_translation = [(points.size - max_job_count_before_translation) * graph_point_distance, 0].max
+      def translate_points(graph_line, points)
+        max_job_count_before_translation = ((width / graph_point_distance_for_line(graph_line)).to_i + 1)
+        x_translation = [(points.size - max_job_count_before_translation) * graph_point_distance_for_line(graph_line), 0].max
         if x_translation > 0
           points.each do |point|
             # need to check if point[:x] is present because if the user shrinks the window, we drop points
@@ -214,7 +233,7 @@ module Kuiq
         points
       end
       
-      def max_visible_point_count = (width / graph_point_distance).to_i + 1
+      def max_visible_point_count(graph_line) = (width / graph_point_distance_for_line(graph_line)).to_i + 1
 
       def hover_stats
         return unless display_attributes_on_hover
@@ -228,7 +247,9 @@ module Kuiq
           closest_points = lines.map { |line| @points[line][closest_point_index] }
           closest_x = closest_points[0]&.[](:x)
           closest_x_distance = PerfectShape::Point.point_distance(x.to_f, 0, closest_x.to_f, 0)
-          if closest_x_distance < graph_point_distance
+          # Today, we make the assumption that all lines have points along the same x-axis values
+          # TODO In the future, we can support different x values along different lines
+          if closest_x_distance < graph_point_distance_for_line(lines[0])
             line(closest_x, graph_padding_height, closest_x, height - graph_padding_height) {
               stroke graph_stroke_hover_line
             }

@@ -7,6 +7,7 @@ module Kuiq
   module Model
     class DashboardGraphPresenter
       JOB_STATUSES = [:failed, :processed]
+      DAY_IN_SECONDS = 60*60*24
 
       attr_reader :job_manager
       attr_accessor :graph_width, :graph_height
@@ -50,13 +51,31 @@ module Kuiq
         end
         reported_stats
       end
+      
+      def report_history_stats(job_status, day_count)
+        reported_stats = {
+          x_interval_in_seconds: day_count*DAY_IN_SECONDS,
+          y_values: [],
+          x_value_format: ->(time) { time.strftime('%Y-%m-%d') },
+        }
+        history_stats = history(day_count: day_count).send(job_status)
+        return reported_stats if history_stats.size <= 1
+        history_stats.each_with_index do |stat, n|
+          formatted_time = stat.first
+          time = DateTime.strptime(formatted_time, '%Y-%m-%d').to_time
+          value = stat.last
+          reported_stats[:x_value_start] = time if n == 0
+          reported_stats[:y_values] << value
+        end
+        reported_stats
+      end
 
-      def multi_day_history(day_count)
+      def history(day_count:)
         Sidekiq::Stats::History.new(day_count)
       end
       
       def multi_day_report_points(day_count, job_status)
-        @multi_day_stats = multi_day_history(day_count).send(job_status)
+        @multi_day_stats = history(day_count: day_count).send(job_status)
         points = []
         return points if @multi_day_stats.size <= 1
         graph_max = [multi_day_job_status_max(day_count), 1].max
@@ -83,7 +102,7 @@ module Kuiq
       end
       
       def multi_day_job_status_max(day_count)
-        history = multi_day_history(day_count)
+        history = history(day_count: day_count)
         JOB_STATUSES.map { |job_status| history.send(job_status).values }.reduce(:+).max
       end
       

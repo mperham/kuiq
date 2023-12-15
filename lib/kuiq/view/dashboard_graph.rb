@@ -60,7 +60,13 @@ module Kuiq
           }
           
           tab_item(t('OneWeek')) {
-            multi_day_graph_area(day_count: 7)
+            line_graph(
+              width: @presenter.graph_width,
+              height: @presenter.graph_height,
+              lines: report_history_graph_lines(day_count: 7),
+              display_attributes_on_hover: true,
+              graph_point_distance: :width_divided_by_point_count,
+            )
           }
           
           tab_item(t('OneMonth')) {
@@ -86,6 +92,15 @@ module Kuiq
             name: t(job_status.capitalize),
             stroke: [*GRAPH_DASHBOARD_COLORS[job_status], thickness: 2],
           }.merge(presenter.report_stats(job_status))
+        end
+      end
+      
+      def report_history_graph_lines(day_count:)
+        Model::DashboardGraphPresenter::JOB_STATUSES.map do |job_status|
+          {
+            name: t(job_status.capitalize),
+            stroke: [*GRAPH_DASHBOARD_COLORS[job_status], thickness: 2],
+          }.merge(presenter.report_history_stats(job_status, day_count))
         end
       end
       
