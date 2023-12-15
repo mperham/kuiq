@@ -11,7 +11,7 @@ require "kuiq/view/queues"
 require "kuiq/view/metrics"
 
 module Kuiq
-  class GUI
+  class GUIApplication
     include Glimmer::LibUI::Application
 
     before_body do

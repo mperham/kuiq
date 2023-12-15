@@ -1,6 +1,7 @@
+require "glimmer/view/line_graph"
+
 require "kuiq"
 require "kuiq/model/dashboard_graph_presenter"
-require "kuiq/view/line_graph"
 
 module Kuiq
   module View

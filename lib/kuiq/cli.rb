@@ -4,7 +4,6 @@ require "sidekiq"
 require "sidekiq/api"
 require "kuiq/version"
 require "kuiq/i18n"
-require "glimmer-dsl-libui"
 
 module Kuiq
   class CLI
@@ -29,8 +28,9 @@ module Kuiq
     end
 
     def gui
-      require "kuiq/view/kuiq_application"
-      Kuiq::GUI.launch
+      require "glimmer-dsl-libui"
+      require "kuiq/view/gui_application"
+      Kuiq::GUIApplication.launch
     end
 
     def run
