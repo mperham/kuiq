@@ -1,6 +1,7 @@
+require "glimmer/view/line_graph"
+
 require "kuiq"
 require "kuiq/model/dashboard_graph_presenter"
-require "kuiq/view/line_graph"
 
 module Kuiq
   module View
@@ -23,7 +24,11 @@ module Kuiq
           on_content_size_changed do
             @live_poll_line_graph.width = @presenter.graph_width = graph_width
             @live_poll_line_graph.height = @presenter.graph_height = graph_height
-            @live_poll_line_graph.lines = report_graph_lines
+            
+            @history_line_graphs.values.each do |history_line_graph|
+              history_line_graph.width = @presenter.graph_width
+              history_line_graph.height = @presenter.graph_height
+            end
           end
         }
         polling_interval = job_manager.polling_interval
@@ -60,40 +65,25 @@ module Kuiq
           }
           
           tab_item(t('OneWeek')) {
-            multi_day_graph_area(day_count: 7)
+            history_line_graph(day_count: 7)
           }
           
           tab_item(t('OneMonth')) {
-            multi_day_graph_area(day_count: 30)
+            history_line_graph(day_count: 30)
           }
           
           tab_item(t('ThreeMonths')) {
-            multi_day_graph_area(day_count: 90)
+            history_line_graph(day_count: 90)
           }
           
           tab_item(t('SixMonths')) {
-            multi_day_graph_area(day_count: 180)
+            history_line_graph(day_count: 180)
           }
           
         }
       }
 
       private
-      
-      def report_graph_lines
-        Model::DashboardGraphPresenter::JOB_STATUSES.map do |job_status|
-          {
-            name: t(job_status.capitalize),
-            stroke: [*GRAPH_DASHBOARD_COLORS[job_status], thickness: 2],
-          }.merge(presenter.report_stats(job_status))
-        end
-      end
-      
-      def graph_background
-        rectangle(0, 0, presenter.graph_width, presenter.graph_height + GRAPH_STATUS_HEIGHT) {
-          fill 255, 255, 255
-        }
-      end
       
       def graph_width
         current_window_width = body_root&.window_proxy&.content_size&.first || WINDOW_WIDTH
@@ -105,198 +95,32 @@ module Kuiq
         current_window_width - 360
       end
       
-      def max_markers
-        [(0.15*presenter.graph_height).to_i, 1].max
-      end
-      
-      def multi_day_graph_area(day_count: 30)
-        area { |graph_area|
-          on_draw do
-            multi_day_graph(day_count)
-          end
-
-          on_mouse_moved do |event|
-            @multi_day_selection_point[day_count] = {x: event[:x], y: event[:y]}
-            graph_area.queue_redraw_all
-          end
-
-          on_mouse_exited do |outside|
-            @multi_day_selection_point[day_count] = nil
-            graph_area.queue_redraw_all
-          end
-        }
-      end
-      
-      def multi_day_graph(day_count)
-        graph_background
-        multi_day_grid_lines(day_count)
-        multi_day_job_status_graph(day_count, :failed)
-        multi_day_job_status_graph(day_count, :processed)
-        multi_day_periodic_lines(day_count)
-        multi_day_selection_stats(day_count)
-      end
-      
-      def multi_day_grid_lines(day_count)
-        line(GRAPH_PADDING_WIDTH, GRAPH_PADDING_HEIGHT, GRAPH_PADDING_WIDTH, presenter.graph_height - GRAPH_PADDING_HEIGHT) {
-          stroke GRAPH_DASHBOARD_COLORS[:grid]
-        }
-        line(GRAPH_PADDING_WIDTH, presenter.graph_height - GRAPH_PADDING_HEIGHT, presenter.graph_width - GRAPH_PADDING_WIDTH, presenter.graph_height - GRAPH_PADDING_HEIGHT) {
-          stroke GRAPH_DASHBOARD_COLORS[:grid]
-        }
-        grid_marker_points = presenter.multi_day_grid_marker_points(day_count)
-        grid_marker_points.each_with_index do |marker_point, index|
-          grid_marker_number_value = (grid_marker_points.size - index).to_i
-          grid_marker_number = (grid_marker_number_value >= 1000) ? "#{grid_marker_number_value / 1000}K" : grid_marker_number.to_s
-          thick = index != grid_marker_points.size - 1
-          mod_value = (2 * ((grid_marker_points.size / max_markers) + 1))
-          comparison_value = (mod_value > 2) ? 0 : 1
-          if mod_value > 2
-            if grid_marker_number_value % mod_value == comparison_value
-              line(marker_point[:x], marker_point[:y], marker_point[:x] + 4, marker_point[:y]) {
-                stroke *GRAPH_DASHBOARD_COLORS[:marker], thickness: (thick ? 2 : 1)
-              }
-            end
-          else
-            line(marker_point[:x], marker_point[:y], marker_point[:x] + 4, marker_point[:y]) {
-              stroke *GRAPH_DASHBOARD_COLORS[:marker], thickness: (thick ? 2 : 1)
-            }
-          end
-          if grid_marker_number_value % mod_value == comparison_value && grid_marker_number_value != grid_marker_points.size
-            line(marker_point[:x], marker_point[:y], marker_point[:x] + presenter.graph_width - GRAPH_PADDING_WIDTH, marker_point[:y]) {
-              stroke *GRAPH_DASHBOARD_COLORS[:marker_dotted_line], thickness: 1, dashes: [1, 1]
-            }
-          end
-          if grid_marker_number_value % mod_value == comparison_value
-            text(marker_point[:x] + 4 + 3, marker_point[:y] - 6, 30) {
-              string(grid_marker_number) {
-                font family: "Arial", size: 11
-                color GRAPH_DASHBOARD_COLORS[:marker_text]
-              }
-            }
-          end
+      def report_graph_lines
+        Model::DashboardGraphPresenter::JOB_STATUSES.map do |job_status|
+          {
+            name: t(job_status.capitalize),
+            stroke: [*GRAPH_DASHBOARD_COLORS[job_status], thickness: 2],
+          }.merge(presenter.report_stats(job_status))
         end
       end
       
-      def multi_day_job_status_graph(day_count, job_status)
-        last_point = nil
-        @multi_day_points[day_count] ||= {}
-        @multi_day_points[day_count][job_status] = presenter.multi_day_report_points(day_count, job_status)
-        @multi_day_points[day_count][job_status].each do |point|
-          if last_point
-            line(last_point[:x], last_point[:y], point[:x], point[:y]) {
-              stroke *GRAPH_DASHBOARD_COLORS[job_status], thickness: 2
-            }
-          end
-          last_point = point
-        end
+      def history_line_graph(day_count: 30)
+        @history_line_graphs ||= {}
+        @history_line_graphs[day_count] = line_graph(
+          width: @presenter.graph_width,
+          height: @presenter.graph_height,
+          lines: report_history_graph_lines(day_count: day_count),
+          display_attributes_on_hover: true,
+          graph_point_distance: :width_divided_by_point_count,
+        )
       end
       
-      def multi_day_selection_stats(day_count)
-        require 'bigdecimal'
-        require 'perfect_shape/point'
-        if @multi_day_selection_point[day_count]
-          x = @multi_day_selection_point[day_count][:x]
-          closest_processed_point = @multi_day_points[day_count][:processed].min_by {|point| (point[:x] - x).abs }
-          closest_failed_point = @multi_day_points[day_count][:failed][@multi_day_points[day_count][:processed].index(closest_processed_point)] if closest_processed_point
-          closest_x = closest_processed_point&.[](:x)
-          closest_x_distance = PerfectShape::Point.point_distance(x.to_f, 0, closest_x.to_f, 0)
-          if closest_x_distance < presenter.multi_day_graph_point_distance(day_count)
-            line(closest_x, GRAPH_PADDING_HEIGHT, closest_x, presenter.graph_height - GRAPH_PADDING_HEIGHT) {
-              stroke *GRAPH_DASHBOARD_COLORS[:selection_stats]
-            }
-            circle(closest_failed_point[:x], closest_failed_point[:y], 4) {
-              fill *GRAPH_DASHBOARD_COLORS[:failed]
-            }
-            circle(closest_failed_point[:x], closest_failed_point[:y], 2) {
-              fill :white
-            }
-            circle(closest_processed_point[:x], closest_processed_point[:y], 4) {
-              fill *GRAPH_DASHBOARD_COLORS[:processed]
-            }
-            circle(closest_processed_point[:x], closest_processed_point[:y], 2) {
-              fill :white
-            }
-            text_label_x = (presenter.graph_width / 2.0)
-            text_label_y = presenter.graph_height + GRAPH_PADDING_HEIGHT
-            text_label_width = 130
-            font_height = 14
-            text(text_label_x, text_label_y, text_label_width) {
-              string(closest_processed_point[:time]) {
-                font family: "Arial", size: font_height
-                color GRAPH_DASHBOARD_COLORS[:marker_text]
-              }
-            }
-            square(text_label_x + text_label_width, text_label_y + 2, font_height - 2) {
-              fill GRAPH_DASHBOARD_COLORS[:failed]
-            }
-            text(text_label_x + text_label_width + font_height + 2, text_label_y, text_label_width) {
-              string("#{t("Failed")}: #{closest_failed_point[:failed]}") {
-                font family: "Arial", size: 14
-                color GRAPH_DASHBOARD_COLORS[:marker_text]
-              }
-            }
-            square(text_label_x + 2 * text_label_width + font_height + 2, text_label_y + 2, font_height - 2) {
-              fill GRAPH_DASHBOARD_COLORS[:processed]
-            }
-            text(text_label_x + 2 * text_label_width + 2 * font_height + 4, text_label_y, text_label_width) {
-              string("#{t("Processed")}: #{closest_processed_point[:processed]}") {
-                font family: "Arial", size: 14
-                color GRAPH_DASHBOARD_COLORS[:marker_text]
-              }
-            }
-          end
-        end
-      end
-      
-      def multi_day_periodic_lines(day_count)
-        case day_count
-        when ..7
-          @multi_day_points[day_count][:processed].each do |point|
-            line(point[:x], GRAPH_PADDING_HEIGHT, point[:x], presenter.graph_height - GRAPH_PADDING_HEIGHT) {
-              stroke *GRAPH_DASHBOARD_COLORS[:periodic_line], thickness: 1, dashes: [1, 1]
-            }
-            day = point[:raw_time].strftime("%e")
-            font_size = 14
-            text(point[:x], presenter.graph_height - GRAPH_PADDING_HEIGHT - font_size*1.4, font_size*2) {
-              string(day) {
-                font family: "Arial", size: font_size
-                color GRAPH_DASHBOARD_COLORS[:failed]
-              }
-            }
-          end
-        when ..30
-          @multi_day_points[day_count][:processed].each_with_index do |point, index|
-            day_number = index + 1
-            if day_number % 7 == 0
-              line(point[:x], GRAPH_PADDING_HEIGHT, point[:x], presenter.graph_height - GRAPH_PADDING_HEIGHT) {
-                stroke *GRAPH_DASHBOARD_COLORS[:periodic_line], thickness: 1, dashes: [1, 1]
-              }
-              date = point[:raw_time].strftime("%b %e")
-              font_size = 14
-              text(point[:x] + 4, presenter.graph_height - GRAPH_PADDING_HEIGHT - font_size*1.4, font_size*6) {
-                string(date) {
-                  font family: "Arial", size: font_size
-                  color GRAPH_DASHBOARD_COLORS[:failed]
-                }
-              }
-            end
-          end
-        else
-          @multi_day_points[day_count][:processed].each do |point|
-            if point[:raw_time].strftime("%d") == "01"
-              line(point[:x], GRAPH_PADDING_HEIGHT, point[:x], presenter.graph_height - GRAPH_PADDING_HEIGHT) {
-                stroke *GRAPH_DASHBOARD_COLORS[:periodic_line], thickness: 1, dashes: [1, 1]
-              }
-              date = point[:raw_time].strftime("%b")
-              font_size = 14
-              text(point[:x] + 4, presenter.graph_height - GRAPH_PADDING_HEIGHT - font_size*1.4, font_size*6) {
-                string(date) {
-                  font family: "Arial", size: font_size
-                  color GRAPH_DASHBOARD_COLORS[:failed]
-                }
-              }
-            end
-          end
+      def report_history_graph_lines(day_count:)
+        Model::DashboardGraphPresenter::JOB_STATUSES.map do |job_status|
+          {
+            name: t(job_status.capitalize),
+            stroke: [*GRAPH_DASHBOARD_COLORS[job_status], thickness: 2],
+          }.merge(presenter.report_history_stats(job_status, day_count))
         end
       end
       

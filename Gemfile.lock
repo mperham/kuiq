@@ -27,7 +27,9 @@ GEM
       rouge (>= 3.26.0, < 4.0.0)
       super_module (~> 1.4.1)
       text-table (>= 1.2.4, < 2.0.0)
-    json (2.7.0)
+    glimmer-libui-cc-graphs_and_charts (0.1.1)
+      glimmer-dsl-libui (~> 0.11)
+    json (2.7.1)
     language_server-protocol (3.17.0.3)
     libui (0.1.2.pre)
     libui (0.1.2.pre-arm64-darwin)
@@ -37,7 +39,7 @@ GEM
     method_source (1.0.0)
     minitest (5.20.0)
     os (1.1.4)
-    parallel (1.23.0)
+    parallel (1.24.0)
     parser (3.2.2.4)
       ast (~> 2.4.1)
       racc
@@ -56,7 +58,7 @@ GEM
       tty-prompt
     redis-client (0.19.0)
       connection_pool
-    regexp_parser (2.8.2)
+    regexp_parser (2.8.3)
     rexml (3.2.6)
     rouge (3.30.0)
     rubocop (1.57.2)
@@ -81,7 +83,7 @@ GEM
       connection_pool (>= 2.3.0)
       rack (>= 2.2.4)
       redis-client (>= 0.14.0)
-    standard (1.32.0)
+    standard (1.32.1)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.0)
       rubocop (~> 1.57.2)
@@ -117,6 +119,7 @@ PLATFORMS
 
 DEPENDENCIES
   glimmer-dsl-libui (= 0.11.6)
+  glimmer-libui-cc-graphs_and_charts (= 0.1.1)
   minitest
   rake
   sidekiq
