@@ -13,6 +13,29 @@ module Kuiq
           stat_row(group_title: t("Summary"), model: job_manager, attributes: Model::Job::STATUSES) {
             stretchy false
           }
+          
+          horizontal_box {
+            stretchy false
+            
+            checkbox(t('LivePoll')) {
+              stretchy false
+              
+              checked <=> [job_manager, :live_poll]
+            }
+            
+            # filler
+            label
+            
+            label("#{t('Filter')}:") {
+              stretchy false
+            }
+            
+            entry {
+              stretchy false
+              
+              text <=> [job_manager, :retry_filter]
+            }
+          }
 
           table {
             text_column(t("NextRetry"))

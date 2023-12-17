@@ -11,8 +11,8 @@ module Kuiq
       REDIS_PROPERTIES = %w[redis_version uptime_in_days connected_clients used_memory_human used_memory_peak_human]
       BUSY_PROPERTIES = %i[process_size total_concurrency busy utilization total_rss]
 
-      attr_accessor :polling_interval
-      attr_reader :redis_url, :redis_info, :current_time
+      attr_accessor :polling_interval, :live_poll
+      attr_reader :redis_url, :redis_info, :current_time, :retry_filter, :schedule_filter, :dead_filter
 
       def initialize
         @polling_interval = POLLING_INTERVAL_DEFAULT
@@ -76,32 +76,61 @@ module Kuiq
         # After data is built, it is cached long-term, till updating table `cell_rows`.
         sorted_jobs(Sidekiq::RetrySet)
       end
+      
+      def retry_filter=(string)
+        @retry_filter = string
+        notify_observers(:retried_jobs)
+      end
 
       def scheduled_jobs
         sorted_jobs(Sidekiq::ScheduledSet)
       end
+      
+      def schedule_filter=(string)
+        @schedule_filter = string
+        notify_observers(:scheduled_jobs)
+      end
 
       def dead_jobs
         sorted_jobs(Sidekiq::DeadSet)
+      end
+      
+      def dead_filter=(string)
+        @dead_filter = string
+        notify_observers(:dead_jobs)
       end
 
       def sorted_jobs(klass)
         inst = klass.new
         key = inst.name
         count = inst.size
+        filter_method_name = "#{key}_filter"
+        filter = send(filter_method_name) if respond_to?(filter_method_name)
         page_size = 25
-        page_data_cache = nil
-        Enumerator::Lazy.new(count.times, count) do |yielder, index|
-          page_index = (index / page_size)
-          page = page_index + 1
-          index_within_page = index % page_size
-          count = 1
-          page_data_cache = nil if index_within_page == 0
-          page_data_cache ||= Paginator.instance.page(key, page, page_size)
-          job_redis_hash_json, score = page_data_cache.last.reject { |j| j.is_a?(Numeric) }[index_within_page]
-          if job_redis_hash_json
-            job_redis_hash = JSON.parse(job_redis_hash_json)
-            yielder << Job.new(job_redis_hash, score, index)
+        if !filter.to_s.strip.empty?
+          result_set = inst.scan(filter).to_a
+          job_cache = result_set.each_with_index.map do |sorted_entry, index|
+            Job.new(JSON.parse(sorted_entry.value), sorted_entry.score, index)
+          end
+          count = job_cache.size
+          Enumerator::Lazy.new(count.times, count) do |yielder, index|
+            yielder << job_cache[index]
+          end
+        else
+          page_data_cache = nil
+          Enumerator::Lazy.new(count.times, count) do |yielder, index|
+            page_index = (index / page_size)
+            page = page_index + 1
+            index_within_page = index % page_size
+            count = 1
+            page_data_cache = nil if index_within_page == 0
+            page_data_cache ||= Paginator.instance.page(key, page, page_size)
+            job_redis_hash_json, score = page_data_cache.last.reject { |j| j.is_a?(Numeric) }[index_within_page]
+            if job_redis_hash_json
+              job_redis_hash = JSON.parse(job_redis_hash_json)
+              job = Job.new(job_redis_hash, score, index)
+              yielder << job
+            end
           end
         end
       end
@@ -111,6 +140,7 @@ module Kuiq
         refresh_stats
         refresh_redis_properties
         refresh_busy_properties
+        refresh_tables
       end
 
       def refresh_busy_properties
@@ -139,6 +169,14 @@ module Kuiq
           # it enables manually triggering data-binding changes when needed
           redis_info.notify_observers(property)
         end
+      end
+      
+      def refresh_tables
+        return unless live_poll
+        
+        notify_observers(:retried_jobs)
+        notify_observers(:scheduled_jobs)
+        notify_observers(:dead_jobs)
       end
     end
   end
