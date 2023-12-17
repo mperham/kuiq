@@ -11,7 +11,7 @@ module Kuiq
       REDIS_PROPERTIES = %w[redis_version uptime_in_days connected_clients used_memory_human used_memory_peak_human]
       BUSY_PROPERTIES = %i[process_size total_concurrency busy utilization total_rss]
 
-      attr_accessor :polling_interval
+      attr_accessor :polling_interval, :live_poll
       attr_reader :redis_url, :redis_info, :current_time, :retry_filter, :schedule_filter, :dead_filter
 
       def initialize
@@ -140,6 +140,7 @@ module Kuiq
         refresh_stats
         refresh_redis_properties
         refresh_busy_properties
+        refresh_tables
       end
 
       def refresh_busy_properties
@@ -168,6 +169,14 @@ module Kuiq
           # it enables manually triggering data-binding changes when needed
           redis_info.notify_observers(property)
         end
+      end
+      
+      def refresh_tables
+        return unless live_poll
+        
+        notify_observers(:retried_jobs)
+        notify_observers(:scheduled_jobs)
+        notify_observers(:dead_jobs)
       end
     end
   end

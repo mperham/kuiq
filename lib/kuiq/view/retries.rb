@@ -17,6 +17,12 @@ module Kuiq
           horizontal_box {
             stretchy false
             
+            checkbox(t('LivePoll')) {
+              stretchy false
+              
+              checked <=> [job_manager, :live_poll]
+            }
+            
             # filler
             label
             
