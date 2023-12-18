@@ -18,6 +18,10 @@ module Kuiq
             stretchy false
           }
 
+          table_toolbar(job_manager: job_manager, include_filter: false) {
+            stretchy false
+          }
+
           group(t("Processes")) {
             margined false
 
@@ -27,6 +31,7 @@ module Kuiq
               text_column(t("RSS"))
               text_column(t("Threads"))
               text_column(t("Busy"))
+              text_column(t("Queues"))
 
               cell_rows <= [job_manager, :processes,
                 column_attributes: {
@@ -34,7 +39,8 @@ module Kuiq
                   t("Started") => :started_at,
                   t("RSS") => :rss,
                   t("Threads") => :concurrency,
-                  t("Busy") => :busy
+                  t("Busy") => :busy,
+                  t("Queues") => :queues,
                 }]
             }
           }

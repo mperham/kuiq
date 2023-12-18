@@ -4,6 +4,7 @@ module Kuiq
       include Glimmer::LibUI::CustomControl
   
       option :job_manager
+      option :include_filter, default: true
       option :filter_name
   
       body {
@@ -17,15 +18,17 @@ module Kuiq
           # filler
           label
           
-          label("#{t('Filter')}:") {
-            stretchy false
-          }
-          
-          entry {
-            stretchy false
+          if include_filter
+            label("#{t('Filter')}:") {
+              stretchy false
+            }
             
-            text <=> [job_manager, "#{filter_name}_filter"]
-          }
+            entry {
+              stretchy false
+              
+              text <=> [job_manager, "#{filter_name}_filter"]
+            }
+          end
         }
       }
   
