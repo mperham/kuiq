@@ -8,8 +8,12 @@ module Kuiq
         @job = hash
       end
 
-      def method_missing(attr)
-        @job["payload"][attr.to_s]
+      def method_missing(method_name, *args, &block)
+        if @job["payload"].include?(method_name.to_s)
+          @job["payload"][method_name.to_s]
+        else
+          super
+        end
       end
 
       def respond_to_missing?(method_name, include_private = false)

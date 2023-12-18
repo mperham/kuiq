@@ -12,13 +12,20 @@ module Kuiq
       def rss
         format_memory(@hash["rss"])
       end
+      
+      def queues
+        @hash["queues"].join(', ')
+      end
 
       def method_missing(attr)
         @hash[attr.to_s]
       end
 
       def respond_to_missing?(attr, include_private = false)
-        super || @hash.include?(attr.to_s)
+        # Sidekiq::Process does not provide a method for checking if an attr is supported or not,
+        # so if a method is missing, we always delegate it to an attribute on the @hash
+        # even if it ends up returning nil
+        true
       end
 
       private

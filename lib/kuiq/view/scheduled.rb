@@ -1,4 +1,5 @@
 require "kuiq/view/stat_row"
+require "kuiq/view/table_toolbar"
 require "kuiq/view/footer"
 
 module Kuiq
@@ -14,27 +15,8 @@ module Kuiq
             stretchy false
           }
           
-          horizontal_box {
+          table_toolbar(job_manager: job_manager, filter_name: "schedule") {
             stretchy false
-            
-            checkbox(t('LivePoll')) {
-              stretchy false
-              
-              checked <=> [job_manager, :live_poll]
-            }
-            
-            # filler
-            label
-            
-            label("#{t('Filter')}:") {
-              stretchy false
-            }
-            
-            entry {
-              stretchy false
-              
-              text <=> [job_manager, :schedule_filter]
-            }
           }
 
           table {

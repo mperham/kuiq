@@ -122,7 +122,6 @@ module Kuiq
             page_index = (index / page_size)
             page = page_index + 1
             index_within_page = index % page_size
-            count = 1
             page_data_cache = nil if index_within_page == 0
             page_data_cache ||= Paginator.instance.page(key, page, page_size)
             job_redis_hash_json, score = page_data_cache.last.reject { |j| j.is_a?(Numeric) }[index_within_page]
@@ -136,11 +135,16 @@ module Kuiq
       end
 
       def refresh
+        clear_caches
         refresh_time
         refresh_stats
         refresh_redis_properties
         refresh_busy_properties
-        refresh_tables
+        refresh_collections
+      end
+      
+      def clear_caches
+        @process_set = @work_set = @stats = nil
       end
 
       def refresh_busy_properties
@@ -155,7 +159,6 @@ module Kuiq
       end
 
       def refresh_stats
-        @process_set = @work_set = @stats = nil
         Job::STATUSES.each do |status|
           # notify_observers is added automatically by Glimmer when data-binding
           # it enables manually triggering data-binding changes when needed
@@ -171,12 +174,14 @@ module Kuiq
         end
       end
       
-      def refresh_tables
+      def refresh_collections
         return unless live_poll
         
         notify_observers(:retried_jobs)
         notify_observers(:scheduled_jobs)
         notify_observers(:dead_jobs)
+        notify_observers(:processes)
+        notify_observers(:works)
       end
     end
   end
