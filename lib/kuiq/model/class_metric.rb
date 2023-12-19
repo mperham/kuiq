@@ -29,7 +29,7 @@ module Kuiq
         @results = results
         # we need to store data in a triad to match what libui expects of
         # table data in a 3-value checkbox text color column
-        @swatch_name_color = [false, klass, ClassMetric.next_swatch_color]
+        @swatch_name_color = [true, klass, ClassMetric.next_swatch_color]
       end
 
       def success = rounded_number(results.dig("totals", "p") - results.dig("totals", "f"))
@@ -50,11 +50,6 @@ module Kuiq
 
       def swatch_color
         swatch_name_color[2]
-      end
-      
-      def update_from(class_metric)
-        swatch_name_color[0] = class_metric.swatch
-        swatch_name_color[2] = class_metric.swatch_color
       end
 
       private

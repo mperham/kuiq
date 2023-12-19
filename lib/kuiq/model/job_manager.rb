@@ -75,23 +75,16 @@ module Kuiq
       end
 
       def metrics
-        query = Sidekiq::Metrics::Query.new
-        query_result = query.top_jobs(minutes: 60)
-        job_results = query_result.job_results
-        sorted_job_results = job_results.sort_by { |_, results| -results.totals["s"] }.take(30)
-        new_class_metrics = sorted_job_results.map { |klass, results| Kuiq::Model::ClassMetric.new(klass, results) }
         if @metrics.nil?
-          @metrics = new_class_metrics
-        else
-          new_class_metrics.each do |new_class_metric|
-            old_class_metric = @metrics.find { |class_metric| class_metric.name == new_class_metric.name }
-            new_class_metric.update_from(old_class_metric)
-          end
-          @metrics = new_class_metrics
+          query = Sidekiq::Metrics::Query.new
+          query_result = query.top_jobs(minutes: 60)
+          job_results = query_result.job_results
+          sorted_job_results = job_results.sort_by { |_, results| -results.totals["s"] }.take(30)
+          @metrics = sorted_job_results.map { |klass, results| Kuiq::Model::ClassMetric.new(klass, results) }
         end
         @metrics
       end
-
+      
       def retried_jobs
         # Data will get lazy loaded into the table as the user scrolls through.
         # After data is built, it is cached long-term, till updating table `cell_rows`.
