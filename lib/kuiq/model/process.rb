@@ -16,8 +16,12 @@ module Kuiq
       def queues
         @hash["queues"].join(', ')
       end
+      
+      def labels
+        @hash["labels"].join(', ')
+      end
 
-      def method_missing(attr)
+      def method_missing(attr, *args, &block)
         @hash[attr.to_s]
       end
 

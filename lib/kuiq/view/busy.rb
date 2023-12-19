@@ -31,6 +31,7 @@ module Kuiq
               text_column(t("RSS"))
               text_column(t("Threads"))
               text_column(t("Busy"))
+              text_column(t("Labels"))
               text_column(t("Queues"))
 
               cell_rows <= [job_manager, :processes,
@@ -40,6 +41,7 @@ module Kuiq
                   t("RSS") => :rss,
                   t("Threads") => :concurrency,
                   t("Busy") => :busy,
+                  t("Labels") => :labels,
                   t("Queues") => :queues,
                 }]
             }
