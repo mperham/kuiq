@@ -58,7 +58,7 @@ module Kuiq
       end
 
       def works
-        work_set.to_a.map { |*args| Work.new(*args) }
+        work_set.to_a.map { |args| Work.new(*args) }
       end
 
       def queues
