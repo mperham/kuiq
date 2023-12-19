@@ -44,28 +44,46 @@ module Kuiq
                 }]
             }
           }
+          
+          horizontal_box {
+            stretchy false
+            
+            # filler
+            label
+            
+            label("#{t("Queue")}:") {
+              stretchy false
+            }
+          
+            combobox {
+              stretchy false
+              
+              items [''] + job_manager.queues.map(&:name)
+              selected_item <=> [job_manager, :work_queue_filter]
+            }
+          }
 
           group(t("Jobs")) {
             margined false
 
             table {
               text_column(t("Process"))
+              text_column(t("Started"))
               text_column(t("TID"))
               text_column(t("JID"))
               text_column(t("Queue"))
               text_column(t("Job"))
               text_column(t("Arguments"))
-              text_column(t("Started"))
 
               cell_rows <= [job_manager, :works,
                 column_attributes: {
                   t("Process") => :process,
+                  t("Started") => :started_at,
                   t("TID") => :thread,
                   t("JID") => :jid,
                   t("Queue") => :queue,
-                  t("Job") => :class,
+                  t("Job") => :job_class,
                   t("Arguments") => :args,
-                  t("Started") => :started_at
                 }]
             }
           }

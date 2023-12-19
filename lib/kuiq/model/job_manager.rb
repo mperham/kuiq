@@ -12,7 +12,9 @@ module Kuiq
       BUSY_PROPERTIES = %i[process_size total_concurrency busy utilization total_rss]
 
       attr_accessor :polling_interval, :live_poll
-      attr_reader :redis_url, :redis_info, :current_time, :retry_filter, :schedule_filter, :dead_filter
+      attr_reader :redis_url, :redis_info, :current_time,
+                  :retry_filter, :schedule_filter, :dead_filter,
+                  :work_queue_filter
 
       def initialize
         @polling_interval = POLLING_INTERVAL_DEFAULT
@@ -58,7 +60,14 @@ module Kuiq
       end
 
       def works
-        work_set.to_a.map { |*args| Work.new(*args) }
+        work_objects = work_set.to_a.map { |args| Work.new(*args) }
+        work_objects = work_objects.select { |work| work.queue == work_queue_filter } if !work_queue_filter.to_s.strip.empty?
+        work_objects
+      end
+      
+      def work_queue_filter=(string)
+        @work_queue_filter = string
+        notify_observers(:works)
       end
 
       def queues
