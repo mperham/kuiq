@@ -25,7 +25,6 @@ module Kuiq
             tab_item(t("Dashboard")) {
               dashboard(job_manager: @job_manager)
             }
-            # TODO enable each tab when implemented (only implemented ones will be visible)
             tab_item("Busy") {
               busy(job_manager: @job_manager)
             }
