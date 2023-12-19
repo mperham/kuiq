@@ -18,10 +18,9 @@ module Kuiq
             margined false
 
             table {
-              checkbox_column("Swatch") {
-                editable true
+              checkbox_text_color_column(t("Name")) {
+                editable_checkbox true
               }
-              text_column(t("Name"))
               text_column(t("Success"))
               text_column(t("Failure"))
               text_column(t("TotalExecutionTime"))
@@ -29,12 +28,11 @@ module Kuiq
 
               cell_rows <= [job_manager, :metrics,
                 column_attributes: {
-                  t("Name") => :name,
+                  t("Name") => :swatch_name_color,
                   t("Success") => :success,
                   t("Failure") => :failure,
                   t("TotalExecutionTime") => :tet,
                   t("AvgExecutionTime") => :aet,
-                  "Swatch" => :swatch
                 }]
             }
           }
