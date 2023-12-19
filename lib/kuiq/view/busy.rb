@@ -44,6 +44,24 @@ module Kuiq
                 }]
             }
           }
+          
+          horizontal_box {
+            stretchy false
+            
+            # filler
+            label
+            
+            label("#{t("Queue")}:") {
+              stretchy false
+            }
+          
+            combobox {
+              stretchy false
+              
+              items [''] + job_manager.queues.map(&:name)
+              selected_item <=> [job_manager, :work_queue_filter]
+            }
+          }
 
           group(t("Jobs")) {
             margined false
