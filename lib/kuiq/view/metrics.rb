@@ -21,11 +21,11 @@ module Kuiq
             @metrics_line_graph.height = @presenter.graph_height = graph_height
           end
         }
-        class_metric_observer = Glimmer::DataBinding::Observer.proc do
-          @metrics_line_graph.lines = @presenter.report_graph_lines
-        end
+        
         job_manager.metrics.each do |class_metric|
-          class_metric_observer.observe(class_metric.swatch_name_color, recursive: true)
+          observe(class_metric, 'swatch_name_color[0]') do
+            @metrics_line_graph.lines = @presenter.report_graph_lines
+          end
         end
       end
 

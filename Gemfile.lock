@@ -10,7 +10,7 @@ GEM
     connection_pool (2.4.1)
     equalizer (0.0.11)
     facets (3.1.0)
-    glimmer (2.7.3)
+    glimmer (2.7.4)
       array_include_methods (~> 1.4.0)
       facets (>= 3.1.0, < 4.0.0)
     glimmer-dsl-libui (0.11.7)
