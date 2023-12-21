@@ -21,11 +21,11 @@ module Kuiq
             @metrics_line_graph.height = @presenter.graph_height = graph_height
           end
         }
-        class_metric_observer = Glimmer::DataBinding::Observer.proc do
-          @metrics_line_graph.lines = @presenter.report_graph_lines
-        end
+        
         job_manager.metrics.each do |class_metric|
-          class_metric_observer.observe(class_metric.swatch_name_color, recursive: true)
+          observe(class_metric, 'swatch_name_color[0]') do
+            @metrics_line_graph.lines = @presenter.report_graph_lines
+          end
         end
       end
 
@@ -44,6 +44,9 @@ module Kuiq
                 height: @presenter.graph_height,
                 lines: @presenter.report_graph_lines,
                 graph_point_distance: :width_divided_by_point_count,
+                graph_point_radius: 3,
+                graph_selected_point_radius: 4,
+                graph_fill_selected_point: :line_stroke,
               )
   
               table {
@@ -80,7 +83,7 @@ module Kuiq
       
       def graph_width
         current_window_width = body_root&.window_proxy&.content_size&.first || WINDOW_WIDTH
-        current_window_width - 15
+        current_window_width - 24
       end
       
       def graph_height
