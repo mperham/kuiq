@@ -3,7 +3,7 @@
 source "https://rubygems.org"
 
 gem "glimmer-dsl-libui", "= 0.11.7"
-gem "glimmer-libui-cc-graphs_and_charts", "= 0.1.5"
+gem "glimmer-libui-cc-graphs_and_charts", "= 0.1.6"
 gem "sidekiq"
 
 group :test do
