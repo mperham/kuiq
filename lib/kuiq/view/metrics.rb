@@ -43,7 +43,6 @@ module Kuiq
                 width: @presenter.graph_width,
                 height: @presenter.graph_height,
                 lines: @presenter.report_graph_lines,
-                graph_point_distance: :width_divided_by_point_count,
                 graph_point_radius: 3,
                 graph_selected_point_radius: 4,
                 graph_fill_selected_point: :line_stroke,
