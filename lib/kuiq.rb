@@ -5,7 +5,7 @@ require "kuiq/version"
 module Kuiq
   WINDOW_WIDTH = 1000.0
   WINDOW_HEIGHT = 635.0
-  GRAPH_MAX_POINTS_LARGEST_SCREEN = 66
+  GRAPH_MAX_POINTS_LARGEST_SCREEN = 577
   GRAPH_DASHBOARD_COLORS = {
     processed: [47, 109, 104],
     failed: [163, 40, 39],
