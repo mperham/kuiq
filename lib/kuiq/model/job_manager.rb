@@ -11,7 +11,7 @@ module Kuiq
       REDIS_PROPERTIES = %w[redis_version uptime_in_days connected_clients used_memory_human used_memory_peak_human]
       BUSY_PROPERTIES = %i[process_size total_concurrency busy utilization total_rss]
 
-      attr_accessor :polling_interval, :live_poll
+      attr_accessor :polling_interval, :live_poll, :selected_job_for_metrics
       attr_reader :redis_url, :redis_info, :current_time,
                   :retry_filter, :schedule_filter, :dead_filter,
                   :work_queue_filter
@@ -21,6 +21,7 @@ module Kuiq
         @redis_url = Sidekiq.redis { |c| c.config.server_url }
         @redis_info = Sidekiq.default_configuration.redis_info
         @current_time = Time.now.utc
+        @selected_job_for_metrics = metrics.map(&:name).first
       end
 
       def stats = @stats ||= Sidekiq::Stats.new
@@ -77,12 +78,40 @@ module Kuiq
       def metrics
         if @metrics.nil?
           query = Sidekiq::Metrics::Query.new
+          # TODO support different values for :minutes option through a combobox dropdown
           query_result = query.top_jobs(minutes: 60)
           job_results = query_result.job_results
           sorted_job_results = job_results.sort_by { |_, results| -results.totals["s"] }.take(30)
           @metrics = sorted_job_results.map { |klass, results| Kuiq::Model::ClassMetric.new(klass, results) }
         end
         @metrics
+      end
+
+      def metrics_for_job(job_worker_name)
+        @metrics_for_job ||= {}
+        if @metrics_for_job[job_worker_name].nil?
+          query = Sidekiq::Metrics::Query.new
+          # TODO support different values for :minutes option through a combobox dropdown
+          query_result = query.for_job(job_worker_name, minutes: 60)
+          job_results = query_result.job_results[job_worker_name]
+          hist_totals = job_results.hist.values.first.zip(*job_results.hist.values[1..]).map(&:sum).reverse
+          bucket_labels = Sidekiq::Metrics::Histogram::LABELS
+          bucket_intervals = Sidekiq::Metrics::Histogram::BUCKET_INTERVALS
+          @metrics_for_job[job_worker_name] = {
+            hist_totals: hist_totals,
+            bucket_labels: bucket_labels,
+            bucket_intervals: bucket_intervals,
+          }
+        end
+        @metrics_for_job[job_worker_name]
+      end
+      
+      def metrics_for_selected_job
+        metrics_for_job(selected_job_for_metrics)
+      end
+      
+      def metric_jobs
+        @metric_jobs ||= metrics.map(&:name)
       end
       
       def retried_jobs

@@ -32,6 +32,11 @@ module Kuiq
           x_value_format: ->(raw_time) { raw_time.strftime(TIME_FORMAT) },
         }
       end
+      
+      def report_metrics_for_selected_job
+        the_metrics = job_manager.metrics_for_selected_job
+        the_metrics[:bucket_labels].zip(the_metrics[:hist_totals]).to_h
+      end
     end
   end
 end
