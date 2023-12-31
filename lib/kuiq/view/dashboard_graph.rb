@@ -95,7 +95,7 @@ module Kuiq
       
       def graph_height
         current_window_height = body_root&.window_proxy&.content_size&.last || WINDOW_HEIGHT
-        current_window_height - 360
+        current_window_height - 395
       end
       
       def report_graph_lines
