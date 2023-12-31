@@ -111,7 +111,9 @@ module Kuiq
       end
       
       def metric_jobs
-        @metric_jobs ||= metrics.map(&:name)
+        @metric_jobs ||= metrics.map(&:name).yield_self do |names|
+          names.empty? ? [''] : names
+        end
       end
       
       def retried_jobs
