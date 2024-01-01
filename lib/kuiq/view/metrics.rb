@@ -20,8 +20,8 @@ module Kuiq
       after_body do
         body_root.window_proxy.content {
           on_content_size_changed do
-            @metrics_line_graph.width = @presenter.graph_width = graph_width
-            @metrics_line_graph.height = @presenter.graph_height = graph_height
+            @metrics_for_job_bar_chart.width = @metrics_line_graph.width = @presenter.graph_width = graph_width
+            @metrics_for_job_bar_chart.height = @metrics_line_graph.height = @presenter.graph_height = graph_height
           end
         }
         
@@ -94,8 +94,13 @@ module Kuiq
                   @metrics_for_job_bar_chart = bar_chart(
                     width: @presenter.graph_width,
                     height: @presenter.graph_height,
+                    x_axis_label: "Execution Time",
+                    y_axis_label: "Jobs",
                     values: @presenter.report_metrics_for_selected_job,
                   )
+                  
+                  # filler to be replaced by bubble chart in the future
+                  area
                 }
               }
             }
@@ -118,7 +123,7 @@ module Kuiq
       
       def graph_height
         current_window_height = body_root&.window_proxy&.content_size&.last || WINDOW_HEIGHT
-        (current_window_height - 195)/2.0 - 5
+        (current_window_height - 220)/2.0 - 5
       end
       
     end
