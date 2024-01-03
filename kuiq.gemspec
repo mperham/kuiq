@@ -32,6 +32,6 @@ Gem::Specification.new do |spec|
 
   # Uncomment to register a new dependency of your gem
   spec.add_dependency "glimmer-dsl-libui", "= 0.11.7"
-  spec.add_dependency "glimmer-libui-cc-graphs_and_charts", "= 0.2.1"
+  spec.add_dependency "glimmer-libui-cc-graphs_and_charts", "= 0.2.3"
   spec.add_dependency "sidekiq", "~> 7.2"
 end
