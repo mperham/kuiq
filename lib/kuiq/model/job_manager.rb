@@ -93,7 +93,9 @@ module Kuiq
           query = Sidekiq::Metrics::Query.new
           # TODO support different values for :minutes option through a combobox dropdown
           query_result = query.for_job(job_worker_name, minutes: 60)
+          query_result.marks.map { |m| [m.bucket, m.label] }
           job_results = query_result.job_results[job_worker_name]
+          ends_at = query_result.ends_at
           hist_totals = job_results.hist.values.first.zip(*job_results.hist.values[1..]).map(&:sum).reverse
           bucket_labels = Sidekiq::Metrics::Histogram::LABELS
           bucket_intervals = Sidekiq::Metrics::Histogram::BUCKET_INTERVALS
@@ -101,6 +103,8 @@ module Kuiq
             hist_totals: hist_totals,
             bucket_labels: bucket_labels,
             bucket_intervals: bucket_intervals,
+            job_results: job_results,
+            ends_at: ends_at,
           }
         end
         @metrics_for_job[job_worker_name]

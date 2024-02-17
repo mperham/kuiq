@@ -1,7 +1,7 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    array_include_methods (1.4.0)
+    array_include_methods (1.5.1)
     ast (2.4.2)
     awesome_print (1.9.2)
     chunky_png (1.4.0)
@@ -10,8 +10,8 @@ GEM
     connection_pool (2.4.1)
     equalizer (0.0.11)
     facets (3.1.0)
-    glimmer (2.7.4)
-      array_include_methods (~> 1.4.0)
+    glimmer (2.7.7)
+      array_include_methods (>= 1.4.0, < 1.6.0)
       facets (>= 3.1.0, < 4.0.0)
     glimmer-dsl-libui (0.11.8)
       chunky_png (~> 1.4.0)
@@ -27,7 +27,7 @@ GEM
       rouge (>= 3.26.0, < 4.0.0)
       super_module (~> 1.4.1)
       text-table (>= 1.2.4, < 2.0.0)
-    glimmer-libui-cc-graphs_and_charts (0.2.3)
+    glimmer-libui-cc-graphs_and_charts (0.3.0)
       glimmer-dsl-libui (>= 0.11.8, < 2.0.0)
     json (2.7.1)
     language_server-protocol (3.17.0.3)
@@ -119,7 +119,7 @@ PLATFORMS
 
 DEPENDENCIES
   glimmer-dsl-libui (= 0.11.8)
-  glimmer-libui-cc-graphs_and_charts (= 0.2.3)
+  glimmer-libui-cc-graphs_and_charts (= 0.3.0)
   minitest
   rake
   sidekiq

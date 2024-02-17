@@ -1,5 +1,6 @@
 require "glimmer/view/line_graph"
 require "glimmer/view/bar_chart"
+require "glimmer/view/bubble_chart"
 
 require "kuiq/model/metrics_graph_presenter"
 
@@ -20,8 +21,13 @@ module Kuiq
       after_body do
         body_root.window_proxy.content {
           on_content_size_changed do
-            @metrics_for_job_bar_chart.width = @metrics_line_graph.width = @presenter.graph_width = graph_width
-            @metrics_for_job_bar_chart.height = @metrics_line_graph.height = @presenter.graph_height = graph_height
+            new_width = @metrics_line_graph.width = @presenter.graph_width = graph_width
+            new_height = @metrics_line_graph.height = @presenter.graph_height = graph_height
+            @metrics_for_job_bar_chart.width = new_width
+            @metrics_for_job_bar_chart.height = new_height
+            @metrics_for_job_bubble_chart.width = new_width
+            @metrics_for_job_bubble_chart.height = new_height
+            @metrics_for_job_bubble_chart.values = @metrics_for_job_bubble_chart.values = @presenter.report_metrics_3d_for_selected_job
           end
         }
         
@@ -33,6 +39,7 @@ module Kuiq
         
         observe(job_manager, :selected_job_for_metrics) do
           @metrics_for_job_bar_chart.values = @presenter.report_metrics_for_selected_job
+          @metrics_for_job_bubble_chart.values = @presenter.report_metrics_3d_for_selected_job
         end
       end
 
@@ -96,11 +103,16 @@ module Kuiq
                     height: @presenter.graph_height,
                     x_axis_label: "Execution Time",
                     y_axis_label: "Jobs",
+                    chart_color_bar: [92, 122, 190],
                     values: @presenter.report_metrics_for_selected_job,
                   )
                   
-                  # filler to be replaced by bubble chart in the future
-                  area
+                  @metrics_for_job_bubble_chart = bubble_chart(
+                    width: @presenter.graph_width,
+                    height: @presenter.graph_height,
+                    chart_color_bubble: [92, 122, 190],
+                    values: @presenter.report_metrics_3d_for_selected_job,
+                  )
                 }
               }
             }
