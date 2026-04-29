@@ -1,5 +1,7 @@
 # Kuiq - Sidekiq UI
 
+## Please use [AndyObtiva/kuiq](https://github.com/AndyObtiva/kuiq).
+
 Kuiq (**UI** for Side**kiq**, pronounced "quick") is a native desktop application for Sidekiq administration. It uses the [Glimmer DSL for LibUI](https://github.com/AndyObtiva/glimmer-dsl-libui) toolkit for building native GUIs in Ruby.
 
 Please note this is a prototype and nothing official or usable at the moment.
